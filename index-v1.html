@@ -1,5 +1,4 @@
 <!doctype html>
-
 <html lang="ar" dir="rtl">
 <head>
   <meta charset="utf-8" />
@@ -37,7 +36,10 @@
         <button id="btnPrint" class="hidden-when-print px-3 py-2 rounded-xl bg-gray-100 text-sm">طباعة</button>
       </div>
     </div>
-  </header>  <!-- Pages -->  <main id="app" class="page max-w-5xl mx-auto px-4 pb-28 pt-4">
+  </header>
+
+  <!-- Pages -->
+  <main id="app" class="page max-w-5xl mx-auto px-4 pb-28 pt-4">
     <!-- Dashboard -->
     <section data-page="dashboard" class="space-y-4">
       <div class="card p-4">
@@ -48,123 +50,130 @@
         <h3 class="font-semibold mb-3">أحدث الجلسات</h3>
         <div id="recentSessions" class="space-y-2"></div>
       </div>
-    </section><!-- Groups -->
-<section data-page="groups" class="hidden space-y-4">
-  <div class="card p-4">
-    <div class="flex items-center gap-2 mb-3">
-      <h2 class="font-semibold">المجموعات</h2>
-      <span class="chip" id="groupsCount">0</span>
-      <div class="ms-auto w-40"><input id="groupSearch" class="input" placeholder="بحث…" /></div>
-    </div>
-    <div id="groupsList" class="space-y-2"></div>
-  </div>
-  <div class="card p-4">
-    <h3 class="font-semibold mb-2">إضافة/تعديل مجموعة</h3>
-    <form id="groupForm" class="grid gap-3 sm:grid-cols-2">
-      <input type="hidden" id="groupId" />
-      <div><label class="text-sm">اسم المجموعة</label><input id="groupName" class="input" required /></div>
-      <div><label class="text-sm">الموقع</label><input id="groupLocation" class="input" /></div>
-      <div class="sm:col-span-2"><label class="text-sm">ملاحظات</label><textarea id="groupNotes" class="input" rows="2"></textarea></div>
-      <div class="sm:col-span-2 flex gap-2">
-        <button class="px-4 py-2 rounded-xl bg-sky-500 text-white" type="submit">حفظ</button>
-        <button id="groupReset" class="px-4 py-2 rounded-xl bg-gray-100" type="button">تفريغ</button>
-      </div>
-    </form>
-  </div>
-</section>
+    </section>
 
-<!-- Students -->
-<section data-page="students" class="hidden space-y-4">
-  <div class="card p-4">
-    <div class="flex items-center gap-2 mb-3">
-      <h2 class="font-semibold">الطلاب</h2>
-      <span class="chip" id="studentsCount">0</span>
-      <div class="ms-auto w-40"><input id="studentSearch" class="input" placeholder="بحث…" /></div>
-    </div>
-    <div class="grid gap-2" id="studentsList"></div>
-  </div>
-  <div class="card p-4">
-    <h3 class="font-semibold mb-2">إضافة/تعديل طالب</h3>
-    <form id="studentForm" class="grid gap-3 sm:grid-cols-2">
-      <input type="hidden" id="studentId" />
-      <div class="sm:col-span-2"><label class="text-sm">الاسم الكامل</label><input id="studentName" class="input" required /></div>
-      <div><label class="text-sm">المجموعة</label><select id="studentGroup" class="input"></select></div>
-      <div><label class="text-sm">الهاتف (واتساب)</label><input id="studentPhone" class="input" inputmode="tel" /></div>
-      <div class="sm:col-span-2"><label class="text-sm">ملاحظات</label><textarea id="studentNotes" class="input" rows="2"></textarea></div>
-      <div class="sm:col-span-2 flex gap-2">
-        <button class="px-4 py-2 rounded-xl bg-sky-500 text-white" type="submit">حفظ</button>
-        <button id="studentReset" class="px-4 py-2 rounded-xl bg-gray-100" type="button">تفريغ</button>
+    <!-- Groups -->
+    <section data-page="groups" class="hidden space-y-4">
+      <div class="card p-4">
+        <div class="flex items-center gap-2 mb-3">
+          <h2 class="font-semibold">المجموعات</h2>
+          <span class="chip" id="groupsCount">0</span>
+          <div class="ms-auto w-40"><input id="groupSearch" class="input" placeholder="بحث…" /></div>
+        </div>
+        <div id="groupsList" class="space-y-2"></div>
       </div>
-    </form>
-  </div>
-</section>
+      <div class="card p-4">
+        <h3 class="font-semibold mb-2">إضافة/تعديل مجموعة</h3>
+        <form id="groupForm" class="grid gap-3 sm:grid-cols-2">
+          <input type="hidden" id="groupId" />
+          <div><label class="text-sm">اسم المجموعة</label><input id="groupName" class="input" required /></div>
+          <div><label class="text-sm">الموقع</label><input id="groupLocation" class="input" /></div>
+          <div class="sm:col-span-2"><label class="text-sm">ملاحظات</label><textarea id="groupNotes" class="input" rows="2"></textarea></div>
+          <div class="sm:col-span-2 flex gap-2">
+            <button class="px-4 py-2 rounded-xl bg-sky-500 text-white" type="submit">حفظ</button>
+            <button id="groupReset" class="px-4 py-2 rounded-xl bg-gray-100" type="button">تفريغ</button>
+          </div>
+        </form>
+      </div>
+    </section>
 
-<!-- Sessions & Attendance -->
-<section data-page="sessions" class="hidden space-y-4">
-  <div class="card p-4">
-    <div class="flex items-center gap-2 mb-3">
-      <h2 class="font-semibold">جلسات وحضور</h2>
-      <div class="ms-auto grid grid-cols-2 gap-2 w-full sm:w-auto">
-        <input id="sessionDate" type="date" class="input" />
-        <select id="sessionGroup" class="input"></select>
+    <!-- Students -->
+    <section data-page="students" class="hidden space-y-4">
+      <div class="card p-4">
+        <div class="flex items-center gap-2 mb-3">
+          <h2 class="font-semibold">الطلاب</h2>
+          <span class="chip" id="studentsCount">0</span>
+          <div class="ms-auto w-40"><input id="studentSearch" class="input" placeholder="بحث…" /></div>
+        </div>
+        <div class="grid gap-2" id="studentsList"></div>
       </div>
-    </div>
-    <div id="attendanceArea" class="space-y-2"></div>
-  </div>
-</section>
+      <div class="card p-4">
+        <h3 class="font-semibold mb-2">إضافة/تعديل طالب</h3>
+        <form id="studentForm" class="grid gap-3 sm:grid-cols-2">
+          <input type="hidden" id="studentId" />
+          <div class="sm:col-span-2"><label class="text-sm">الاسم الكامل</label><input id="studentName" class="input" required /></div>
+          <div><label class="text-sm">المجموعة</label><select id="studentGroup" class="input"></select></div>
+          <div><label class="text-sm">الهاتف (واتساب)</label><input id="studentPhone" class="input" inputmode="tel" /></div>
+          <div class="sm:col-span-2"><label class="text-sm">ملاحظات</label><textarea id="studentNotes" class="input" rows="2"></textarea></div>
+          <div class="sm:col-span-2 flex gap-2">
+            <button class="px-4 py-2 rounded-xl bg-sky-500 text-white" type="submit">حفظ</button>
+            <button id="studentReset" class="px-4 py-2 rounded-xl bg-gray-100" type="button">تفريغ</button>
+          </div>
+        </form>
+      </div>
+    </section>
 
-<!-- Reports -->
-<section data-page="reports" class="hidden space-y-4">
-  <div class="card p-4">
-    <div class="grid gap-2 sm:grid-cols-4">
-      <div>
-        <label class="text-sm">الشهر</label>
-        <input id="repMonth" type="month" class="input" />
+    <!-- Sessions & Attendance -->
+    <section data-page="sessions" class="hidden space-y-4">
+      <div class="card p-4">
+        <div class="flex items-center gap-2 mb-3">
+          <h2 class="font-semibold">جلسات وحضور</h2>
+          <div class="ms-auto grid grid-cols-2 gap-2 w-full sm:w-auto">
+            <input id="sessionDate" type="date" class="input" />
+            <select id="sessionGroup" class="input"></select>
+          </div>
+        </div>
+        <div id="attendanceArea" class="space-y-2"></div>
       </div>
-      <div>
-        <label class="text-sm">المجموعة</label>
-        <select id="repGroup" class="input"></select>
-      </div>
-      <div class="sm:col-span-2 flex items-end gap-2">
-        <button id="btnRunReport" class="px-4 py-2 rounded-xl bg-sky-500 text-white">توليد التقرير</button>
-        <button id="btnShareWA" class="px-4 py-2 rounded-xl bg-emerald-500 text-white">مشاركة واتساب</button>
-        <button id="btnExportCSV" class="px-4 py-2 rounded-xl bg-gray-100">CSV</button>
-      </div>
-    </div>
-  </div>
-  <div class="card p-4">
-    <h3 class="font-semibold mb-2">ملخص شهري للمجموعة</h3>
-    <div id="groupSummary" class="text-sm"></div>
-  </div>
-  <div class="card p-4">
-    <h3 class="font-semibold mb-2">تقييم كل طالب</h3>
-    <div id="studentTable" class="overflow-auto"></div>
-  </div>
-</section>
+    </section>
 
-<!-- Settings -->
-<section data-page="settings" class="hidden space-y-4">
-  <div class="card p-4 grid gap-3">
-    <h2 class="font-semibold">إعدادات</h2>
-    <div>
-      <label class="text-sm">اسم المعلم</label>
-      <input id="teacherName" class="input" placeholder="اسمك" />
-    </div>
-    <div>
-      <label class="text-sm">المعايير (من 0 إلى 5)</label>
-      <div class="text-xs text-gray-500">الحفظ، الورد، القراءة، الانضباط</div>
-    </div>
-    <button id="btnWipe" class="px-4 py-2 rounded-xl bg-rose-500 text-white">حذف كل البيانات (محليًا)</button>
-  </div>
-</section>
+    <!-- Reports -->
+    <section data-page="reports" class="hidden space-y-4">
+      <div class="card p-4">
+        <div class="grid gap-2 sm:grid-cols-4">
+          <div>
+            <label class="text-sm">الشهر</label>
+            <input id="repMonth" type="month" class="input" />
+          </div>
+          <div>
+            <label class="text-sm">المجموعة</label>
+            <select id="repGroup" class="input"></select>
+          </div>
+          <div class="sm:col-span-2 flex items-end gap-2">
+            <button id="btnRunReport" class="px-4 py-2 rounded-xl bg-sky-500 text-white">توليد التقرير</button>
+            <button id="btnShareWA" class="px-4 py-2 rounded-xl bg-emerald-500 text-white">مشاركة واتساب</button>
+            <button id="btnExportCSV" class="px-4 py-2 rounded-xl bg-gray-100">CSV</button>
+          </div>
+        </div>
+      </div>
+      <div class="card p-4">
+        <h3 class="font-semibold mb-2">ملخص شهري للمجموعة</h3>
+        <div id="groupSummary" class="text-sm"></div>
+      </div>
+      <div class="card p-4">
+        <h3 class="font-semibold mb-2">تقييم كل طالب</h3>
+        <div id="studentTable" class="overflow-auto"></div>
+      </div>
+    </section>
 
-  </main>  <!-- FAB quick add -->  <div class="fab hidden-when-print">
+    <!-- Settings -->
+    <section data-page="settings" class="hidden space-y-4">
+      <div class="card p-4 grid gap-3">
+        <h2 class="font-semibold">إعدادات</h2>
+        <div>
+          <label class="text-sm">اسم المعلم</label>
+          <input id="teacherName" class="input" placeholder="اسمك" />
+        </div>
+        <div>
+          <label class="text-sm">المعايير (من 0 إلى 5)</label>
+          <div class="text-xs text-gray-500">الحفظ، الورد، القراءة، الانضباط</div>
+        </div>
+        <button id="btnWipe" class="px-4 py-2 rounded-xl bg-rose-500 text-white">حذف كل البيانات (محليًا)</button>
+      </div>
+    </section>
+  </main>
+
+  <!-- FAB quick add -->
+  <div class="fab hidden-when-print">
     <div class="grid gap-2">
       <button id="fabAddGroup" class="px-4 py-3 rounded-2xl bg-sky-600 text-white shadow">+ مجموعة</button>
       <button id="fabAddStudent" class="px-4 py-3 rounded-2xl bg-emerald-600 text-white shadow">+ طالب</button>
       <button id="fabTakeAttendance" class="px-4 py-3 rounded-2xl bg-indigo-600 text-white shadow">+ حضور اليوم</button>
     </div>
-  </div>  <!-- Bottom Nav -->  <nav class="bottom-nav bg-white border-t">
+  </div>
+
+  <!-- Bottom Nav -->
+  <nav class="bottom-nav bg-white border-t">
     <div class="max-w-5xl mx-auto grid grid-cols-5 text-center">
       <button data-nav="dashboard" class="nav-btn px-2 py-3 text-sm font-medium">الرئيسية</button>
       <button data-nav="groups" class="nav-btn px-2 py-3 text-sm">المجموعات</button>
@@ -172,14 +181,19 @@
       <button data-nav="sessions" class="nav-btn px-2 py-3 text-sm">الجلسات</button>
       <button data-nav="reports" class="nav-btn px-2 py-3 text-sm">التقارير</button>
     </div>
-  </nav>  <!-- Templates -->  <template id="tplGroupItem">
+  </nav>
+
+  <!-- Templates -->
+  <template id="tplGroupItem">
     <div class="p-3 border rounded-xl flex items-center gap-2">
       <div class="font-semibold grow">{{name}}</div>
       <div class="chip">{{location}}</div>
       <button class="px-3 py-1 rounded-xl bg-gray-100 text-sm" data-act="edit">تعديل</button>
       <button class="px-3 py-1 rounded-xl bg-rose-100 text-rose-700 text-sm" data-act="del">حذف</button>
     </div>
-  </template>  <template id="tplStudentItem">
+  </template>
+
+  <template id="tplStudentItem">
     <div class="p-3 border rounded-xl grid grid-cols-[auto_1fr_auto] gap-3 items-center">
       <div class="w-9 h-9 rounded-full bg-sky-100 grid place-items-center font-bold text-sky-700">{{ini}}</div>
       <div>
@@ -192,7 +206,9 @@
         <button class="px-3 py-1 rounded-xl bg-rose-100 text-rose-700 text-sm" data-act="del">حذف</button>
       </div>
     </div>
-  </template>  <template id="tplAttendanceRow">
+  </template>
+
+  <template id="tplAttendanceRow">
     <div class="p-3 border rounded-xl grid grid-cols-1 gap-2">
       <div class="flex items-center gap-2">
         <div class="w-8 h-8 rounded-full bg-slate-100 grid place-items-center text-xs">{{idx}}</div>
@@ -208,7 +224,10 @@
         <label class="sm:col-span-2">ملاحظة<textarea data-f="note" class="input" rows="1"></textarea></label>
       </div>
     </div>
-  </template>  <!-- App Script -->  <script>
+  </template>
+
+  <!-- App Script -->
+  <script>
     // --- Simple tiny templating ---
     function tpl(id, data){
       return document.getElementById(id).innerHTML.replace(/{{(\w+)}}/g, (_,k)=> data[k]??'')
@@ -612,5 +631,6 @@
     document.getElementById('btnPrint').onclick = ()=> window.print();
 
     load();
-  </script></body>
+  </script>
+</body>
 </html>
