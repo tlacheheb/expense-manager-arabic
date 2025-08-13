@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>مدير المصروفات</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input, select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        button {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-right: 10px;
+        }
+        button:hover {
+            background-color: #2980b9;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: right;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        .chart-container {
+            margin-top: 30px;
+            height: 300px;
+        }
+        .actions {
+            margin: 20px 0;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>مدير المصروفات</h1>
+        
+        <div class="form-group">
+            <label for="amount">المبلغ:</label>
+            <input type="number" id="amount" step="0.01" required>
+        </div>
+        
+        <div class="form-group">
+            <label for="description">الوصف:</label>
+            <input type="text" id="description" required>
+        </div>
+        
+        <div class="form-group">
+            <label for="category">الفئة:</label>
+            <select id="category">
+                <option value="طعام">طعام</option>
+                <option value="مواصلات">مواصلات</option>
+                <option value="تسوق">تسوق</option>
+                <option value="ترفيه">ترفيه</option>
+                <option value="فواتير">فواتير</option>
+                <option value="أخرى">أخرى</option>
+            </select>
+        </div>
+        
+        <div class="form-group">
+            <label for="date">التاريخ:</label>
+            <input type="date" id="date" required>
+        </div>
+        
+        <button id="addBtn">إضافة مصروف</button>
+        
+        <div class="actions">
+            <button id="exportBtn">تصدير إلى JSON</button>
+            <button id="importBtn">استيراد من JSON</button>
+            <input type="file" id="fileInput" accept=".json" style="display: none;">
+        </div>
+        
+        <table id="expensesTable">
+            <thead>
+                <tr>
+                    <th>التاريخ</th>
+                    <th>المبلغ</th>
+                    <th>الوصف</th>
+                    <th>الفئة</th>
+                    <th>إجراءات</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+        
+        <div class="chart-container">
+            <canvas id="monthlyChart"></canvas>
+        </div>
+    </div>
+
+    <script>
+        // Initialize database
+        let db;
+        const dbName = "ExpenseDB";
+        const storeName = "expenses";
+        
+        // Chart variable
+        let monthlyChart;
+        
+        // Initialize the application
+        document.addEventListener('DOMContentLoaded', async function() {
+            // Set today's date as default
+            document.getElementById('date').valueAsDate = new Date();
+            
+            // Initialize database
+            await initDB();
+            
+            // Load expenses and update chart
+            await loadExpenses();
+            updateMonthlyChart();
+            
+            // Add event listeners
+            document.getElementById('addBtn').addEventListener('click', addExpense);
+            document.getElementById('exportBtn').addEventListener('click', exportToJSON);
+            document.getElementById('importBtn').addEventListener('click', () => document.getElementById('fileInput').click());
+            document.getElementById('fileInput').addEventListener('change', importFromJSON);
+            
+            // Save data before window closes
+            window.addEventListener('beforeunload', exportToJSON);
+        });
+        
+        // Initialize IndexedDB
+        function initDB() {
+            return new Promise((resolve, reject) => {
+                const request = indexedDB.open(dbName, 1);
+                
+                request.onupgradeneeded = function(event) {
+                    db = event.target.result;
+                    if (!db.objectStoreNames.contains(storeName)) {
+                        const store = db.createObjectStore(storeName, { keyPath: 'id', autoIncrement: true });
+                        store.createIndex('date', 'date', { unique: false });
+                    }
+                };
+                
+                request.onsuccess = function(event) {
+                    db = event.target.result;
+                    resolve();
+                };
+                
+                request.onerror = function(event) {
+                    console.error("Error opening DB", event.target.error);
+                    reject(event.target.error);
+                };
+            });
+        }
+        
+        // Add new expense
+        function addExpense() {
+            const amount = parseFloat(document.getElementById('amount').value);
+            const description = document.getElementById('description').value;
+            const category = document.getElementById('category').value;
+            const date = document.getElementById('date').value;
+            
+            if (!amount || !description || !date) {
+                alert("الرجاء ملء جميع الحقول");
+                return;
+            }
+            
+            const transaction = db.transaction([storeName], 'readwrite');
+            const store = transaction.objectStore(storeName);
+            
+            const expense = {
+                amount: amount,
+                description: description,
+                category: category,
+                date: date,
+                timestamp: new Date().getTime()
+            };
+            
+            const request = store.add(expense);
+            
+            request.onsuccess = function() {
+                document.getElementById('amount').value = '';
+                document.getElementById('description').value = '';
+                loadExpenses();
+                updateMonthlyChart();
+            };
+            
+            request.onerror = function(event) {
+                console.error("Error adding expense", event.target.error);
+            };
+        }
+        
+        // Load all expenses
+        function loadExpenses() {
+            return new Promise((resolve, reject) => {
+                const transaction = db.transaction([storeName], 'readonly');
+                const store = transaction.objectStore(storeName);
+                const request = store.getAll();
+                
+                request.onsuccess = function() {
+                    displayExpenses(request.result);
+                    resolve(request.result);
+                };
+                
+                request.onerror = function(event) {
+                    console.error("Error loading expenses", event.target.error);
+                    reject(event.target.error);
+                };
+            });
+        }
+        
+        // Display expenses in table
+        function displayExpenses(expenses) {
+            const tbody = document.querySelector('#expensesTable tbody');
+            tbody.innerHTML = '';
+            
+            expenses.sort((a, b) => new Date(b.date) - new Date(a.date));
+            
+            expenses.forEach(expense => {
+                const row = document.createElement('tr');
+                
+                row.innerHTML = `
+                    <td>${formatDate(expense.date)}</td>
+                    <td>${expense.amount.toFixed(2)}</td>
+                    <td>${expense.description}</td>
+                    <td>${expense.category}</td>
+                    <td>
+                        <button onclick="deleteExpense(${expense.id})">حذف</button>
+                    </td>
+                `;
+                
+                tbody.appendChild(row);
+            });
+        }
+        
+        // Delete expense
+        function deleteExpense(id) {
+            if (!confirm("هل أنت متأكد من حذف هذا المصروف؟")) return;
+            
+            const transaction = db.transaction([storeName], 'readwrite');
+            const store = transaction.objectStore(storeName);
+            const request = store.delete(id);
+            
+            request.onsuccess = function() {
+                loadExpenses();
+                updateMonthlyChart();
+            };
+            
+            request.onerror = function(event) {
+                console.error("Error deleting expense", event.target.error);
+            };
+        }
+        
+        // Update monthly chart
+        function updateMonthlyChart() {
+            const transaction = db.transaction([storeName], 'readonly');
+            const store = transaction.objectStore(storeName);
+            const request = store.getAll();
+            
+            request.onsuccess = function() {
+                const expenses = request.result;
+                const monthlyTotals = {};
+                
+                expenses.forEach(expense => {
+                    const date = new Date(expense.date);
+                    const monthYear = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+                    
+                    if (!monthlyTotals[monthYear]) {
+                        monthlyTotals[monthYear] = 0;
+                    }
+                    
+                    monthlyTotals[monthYear] += expense.amount;
+                });
+                
+                // Sort months chronologically
+                const sortedMonths = Object.keys(monthlyTotals).sort();
+                const labels = sortedMonths.map(month => formatMonthYear(month));
+                const data = sortedMonths.map(month => monthlyTotals[month]);
+                
+                const ctx = document.getElementById('monthlyChart').getContext('2d');
+                
+                if (monthlyChart) {
+                    monthlyChart.data.labels = labels;
+                    monthlyChart.data.datasets[0].data = data;
+                    monthlyChart.update();
+                } else {
+                    monthlyChart = new Chart(ctx, {
+                        type: 'bar',
+                        data: {
+                            labels: labels,
+                            datasets: [{
+                                label: 'إجمالي المصروفات الشهرية',
+                                data: data,
+                                backgroundColor: 'rgba(54, 162, 235, 0.5)',
+                                borderColor: 'rgba(54, 162, 235, 1)',
+                                borderWidth: 1
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            scales: {
+                                y: {
+                                    beginAtZero: true,
+                                    title: {
+                                        display: true,
+                                        text: 'المبلغ'
+                                    }
+                                },
+                                x: {
+                                    title: {
+                                        display: true,
+                                        text: 'الشهر'
+                                    }
+                                }
+                            }
+                        }
+                    });
+                }
+            };
+        }
+        
+        // Export to JSON file
+        async function exportToJSON() {
+            const expenses = await loadExpenses();
+            const dataStr = JSON.stringify(expenses, null, 2);
+            const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+            
+            const exportFileDefaultName = `expenses_${new Date().toISOString().slice(0,10)}.json`;
+            
+            const linkElement = document.createElement('a');
+            linkElement.setAttribute('href', dataUri);
+            linkElement.setAttribute('download', exportFileDefaultName);
+            linkElement.click();
+        }
+        
+        // Import from JSON file
+        function importFromJSON(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            if (!confirm("هل أنت متأكد من استيراد البيانات؟ سيتم استبدال جميع البيانات الحالية.")) {
+                event.target.value = '';
+                return;
+            }
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const expenses = JSON.parse(e.target.result);
+                    
+                    if (!Array.isArray(expenses)) {
+                        throw new Error("الملف لا يحتوي على مصروفات صالحة");
+                    }
+                    
+                    const transaction = db.transaction([storeName], 'readwrite');
+                    const store = transaction.objectStore(storeName);
+                    
+                    // Clear existing data
+                    store.clear();
+                    
+                    // Add new data
+                    expenses.forEach(expense => {
+                        store.add(expense);
+                    });
+                    
+                    transaction.oncomplete = function() {
+                        loadExpenses();
+                        updateMonthlyChart();
+                        alert("تم استيراد البيانات بنجاح");
+                        event.target.value = '';
+                    };
+                    
+                    transaction.onerror = function(event) {
+                        console.error("Error importing data", event.target.error);
+                        alert("حدث خطأ أثناء استيراد البيانات");
+                        event.target.value = '';
+                    };
+                } catch (error) {
+                    console.error("Error parsing JSON", error);
+                    alert("خطأ في قراءة الملف: " + error.message);
+                    event.target.value = '';
+                }
+            };
+            reader.readAsText(file);
+        }
+        
+        // Helper functions
+        function formatDate(dateStr) {
+            const date = new Date(dateStr);
+            return date.toLocaleDateString('ar-EG');
+        }
+        
+        function formatMonthYear(monthYear) {
+            const [year, month] = monthYear.split('-');
+            const monthNames = ["يناير", "فبراير", "مارس", "أبريل", "مايو", "يونيو",
+                              "يوليو", "أغسطس", "سبتمبر", "أكتوبر", "نوفمبر", "ديسمبر"];
+            return `${monthNames[parseInt(month) - 1]} ${year}`;
+        }
+        
+        // Fix typo in function name
+        window.addExpense = addExpense;
+    </script>
+</body>
+</html>
