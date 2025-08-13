@@ -1,167 +1,186 @@
 <!doctype html>
-
-<html lang="ar" dir="rtl">
+<html lang="ar" dir="rtl" class="scroll-smooth">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>إدارة حلقات التحفيظ – تطبيق الجوال (ملف واحد)</title>
+  <title>إدارة حلقات التحفيظ – تطبيق الجوال (ملف واحد + PWA + PDF + وضع ليلي)</title>
+  <script>window.tailwind=window.tailwind||{}; tailwind.config={ darkMode:'class' };</script>
   <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js" integrity="sha512-YcsIPyZz0aQfT2e9QhVwQqT+0f4XeL3lGTc6k2UeJ0OQxg0I0g+JQm0nWq1k8eJwxm1oJcQy2A0k2iXnLrXfLw==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
   <meta name="theme-color" content="#0ea5e9" />
   <style>
-    html, body {height: 100%; background:#f7fafc}
+    html, body {height: 100%;}
     .bottom-nav{position:fixed;bottom:0;left:0;right:0;z-index:40}
     .input{border:1px solid #e5e7eb;border-radius:0.75rem;padding:0.6rem 0.8rem;width:100%;background:#fff}
     .card{background:#fff;border-radius:1rem;box-shadow:0 6px 20px rgba(2,6,23,.06)}
     .chip{display:inline-block;background:#f1f5f9;border-radius:999px;padding:.15rem .6rem;font-size:.75rem}
     .fab{position:fixed;right:1rem;bottom:5rem;z-index:30}
     .hidden-when-print{display:block}
+    @media (prefers-color-scheme: dark){ .input{background:#0b1220;color:#e5e7eb;border-color:#1f2937} .card{background:#0b1220} .chip{background:#111827;color:#cbd5e1} }
     @media print{.hidden-when-print{display:none} .page{padding:0}}
   </style>
 </head>
-<body class="min-h-full text-gray-800 selection:bg-sky-200">
-  <header class="sticky top-0 z-40 bg-white/90 backdrop-blur border-b">
+<body class="min-h-full bg-slate-50 text-slate-800 selection:bg-sky-200 dark:bg-slate-900 dark:text-slate-100">
+  <header class="sticky top-0 z-40 bg-white/90 dark:bg-slate-900/80 backdrop-blur border-b border-slate-200 dark:border-slate-800">
     <div class="max-w-5xl mx-auto px-4 py-3 flex items-center gap-3">
       <div class="w-9 h-9 rounded-2xl bg-sky-500 text-white grid place-items-center font-bold">ح</div>
       <div>
         <h1 class="text-lg font-bold leading-tight">إدارة حلقات القرآن والحديث</h1>
-        <p class="text-xs text-gray-500">نسخة أحادية الملف، سريعة ومناسبة للجوال – تخزين محلي بـ IndexedDB</p>
+        <p class="text-xs text-gray-500 dark:text-gray-400">ملف واحد – تخزين محلي – يدعم PWA وPDF والوضع الليلي</p>
       </div>
       <div class="ms-auto flex items-center gap-2">
+        <button id="btnTheme" class="hidden-when-print px-3 py-2 rounded-xl bg-gray-100 dark:bg-slate-800 text-sm">الوضع الليلي</button>
+        <button id="btnInstall" class="hidden-when-print px-3 py-2 rounded-xl bg-indigo-500 text-white text-sm hidden">تثبيت</button>
         <button id="btnExport" class="hidden-when-print px-3 py-2 rounded-xl bg-emerald-500 text-white text-sm">نسخ احتياطي</button>
-        <label class="hidden-when-print cursor-pointer px-3 py-2 rounded-xl bg-gray-200 text-sm">
+        <label class="hidden-when-print cursor-pointer px-3 py-2 rounded-xl bg-gray-200 text-sm dark:bg-slate-800">
           استيراد<input id="importFile" type="file" accept="application/json" class="hidden" />
         </label>
-        <button id="btnPrint" class="hidden-when-print px-3 py-2 rounded-xl bg-gray-100 text-sm">طباعة</button>
+        <button id="btnPrint" class="hidden-when-print px-3 py-2 rounded-xl bg-gray-100 dark:bg-slate-800 text-sm">طباعة</button>
       </div>
     </div>
-  </header>  <main id="app" class="page max-w-5xl mx-auto px-4 pb-28 pt-4">
+  </header>
+
+  <main id="app" class="page max-w-5xl mx-auto px-4 pb-32 pt-4">
     <!-- Dashboard -->
     <section data-page="dashboard" class="space-y-4">
-      <div class="card p-4">
+      <div class="card p-4 dark:bg-slate-900">
         <h2 class="font-semibold mb-2">نظرة عامة</h2>
         <div id="stats" class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center"></div>
       </div>
-      <div class="card p-4">
-        <h3 class="font-semibold mb-3">أحدث الجلسات</h3>
+      <div class="card p-4 dark:bg-slate-900">
+        <div class="flex items-center justify-between mb-2">
+          <h3 class="font-semibold">أحدث الجلسات</h3>
+          <button id="btnPDFQuick" class="hidden-when-print px-3 py-2 rounded-xl bg-rose-500 text-white text-sm">PDF سريع</button>
+        </div>
         <div id="recentSessions" class="space-y-2"></div>
       </div>
-    </section><!-- Groups -->
-<section data-page="groups" class="hidden space-y-4">
-  <div class="card p-4">
-    <div class="flex items-center gap-2 mb-3">
-      <h2 class="font-semibold">المجموعات</h2>
-      <span class="chip" id="groupsCount">0</span>
-      <div class="ms-auto w-40"><input id="groupSearch" class="input" placeholder="بحث…" /></div>
-    </div>
-    <div id="groupsList" class="space-y-2"></div>
-  </div>
-  <div class="card p-4">
-    <h3 class="font-semibold mb-2">إضافة/تعديل مجموعة</h3>
-    <form id="groupForm" class="grid gap-3 sm:grid-cols-2">
-      <input type="hidden" id="groupId" />
-      <div><label class="text-sm">اسم المجموعة</label><input id="groupName" class="input" required /></div>
-      <div><label class="text-sm">الموقع</label><input id="groupLocation" class="input" /></div>
-      <div class="sm:col-span-2"><label class="text-sm">ملاحظات</label><textarea id="groupNotes" class="input" rows="2"></textarea></div>
-      <div class="sm:col-span-2 flex gap-2">
-        <button class="px-4 py-2 rounded-xl bg-sky-500 text-white" type="submit">حفظ</button>
-        <button id="groupReset" class="px-4 py-2 rounded-xl bg-gray-100" type="button">تفريغ</button>
-      </div>
-    </form>
-  </div>
-</section>
+    </section>
 
-<!-- Students -->
-<section data-page="students" class="hidden space-y-4">
-  <div class="card p-4">
-    <div class="flex items-center gap-2 mb-3">
-      <h2 class="font-semibold">الطلاب</h2>
-      <span class="chip" id="studentsCount">0</span>
-      <div class="ms-auto w-40"><input id="studentSearch" class="input" placeholder="بحث…" /></div>
-    </div>
-    <div class="grid gap-2" id="studentsList"></div>
-  </div>
-  <div class="card p-4">
-    <h3 class="font-semibold mb-2">إضافة/تعديل طالب</h3>
-    <form id="studentForm" class="grid gap-3 sm:grid-cols-2">
-      <input type="hidden" id="studentId" />
-      <div class="sm:col-span-2"><label class="text-sm">الاسم الكامل</label><input id="studentName" class="input" required /></div>
-      <div><label class="text-sm">المجموعة</label><select id="studentGroup" class="input"></select></div>
-      <div><label class="text-sm">الهاتف (واتساب)</label><input id="studentPhone" class="input" inputmode="tel" /></div>
-      <div class="sm:col-span-2"><label class="text-sm">ملاحظات</label><textarea id="studentNotes" class="input" rows="2"></textarea></div>
-      <div class="sm:col-span-2 flex gap-2">
-        <button class="px-4 py-2 rounded-xl bg-sky-500 text-white" type="submit">حفظ</button>
-        <button id="studentReset" class="px-4 py-2 rounded-xl bg-gray-100" type="button">تفريغ</button>
+    <!-- Groups -->
+    <section data-page="groups" class="hidden space-y-4">
+      <div class="card p-4 dark:bg-slate-900">
+        <div class="flex items-center gap-2 mb-3">
+          <h2 class="font-semibold">المجموعات</h2>
+          <span class="chip" id="groupsCount">0</span>
+          <div class="ms-auto w-40"><input id="groupSearch" class="input" placeholder="بحث…" /></div>
+        </div>
+        <div id="groupsList" class="space-y-2"></div>
       </div>
-    </form>
-  </div>
-</section>
+      <div class="card p-4 dark:bg-slate-900">
+        <h3 class="font-semibold mb-2">إضافة/تعديل مجموعة</h3>
+        <form id="groupForm" class="grid gap-3 sm:grid-cols-2">
+          <input type="hidden" id="groupId" />
+          <div><label class="text-sm">اسم المجموعة</label><input id="groupName" class="input" required /></div>
+          <div><label class="text-sm">الموقع</label><input id="groupLocation" class="input" /></div>
+          <div class="sm:col-span-2"><label class="text-sm">ملاحظات</label><textarea id="groupNotes" class="input" rows="2"></textarea></div>
+          <div class="sm:col-span-2 flex gap-2">
+            <button class="px-4 py-2 rounded-xl bg-sky-500 text-white" type="submit">حفظ</button>
+            <button id="groupReset" class="px-4 py-2 rounded-xl bg-gray-100 dark:bg-slate-800" type="button">تفريغ</button>
+          </div>
+        </form>
+      </div>
+    </section>
 
-<!-- Sessions & Attendance -->
-<section data-page="sessions" class="hidden space-y-4">
-  <div class="card p-4">
-    <div class="flex items-center gap-2 mb-3">
-      <h2 class="font-semibold">جلسات وحضور</h2>
-      <div class="ms-auto grid grid-cols-2 gap-2 w-full sm:w-auto">
-        <input id="sessionDate" type="date" class="input" />
-        <select id="sessionGroup" class="input"></select>
+    <!-- Students -->
+    <section data-page="students" class="hidden space-y-4">
+      <div class="card p-4 dark:bg-slate-900">
+        <div class="flex items-center gap-2 mb-3">
+          <h2 class="font-semibold">الطلاب</h2>
+          <span class="chip" id="studentsCount">0</span>
+          <div class="ms-auto w-40"><input id="studentSearch" class="input" placeholder="بحث…" /></div>
+        </div>
+        <div class="grid gap-2" id="studentsList"></div>
       </div>
-    </div>
-    <div id="attendanceArea" class="space-y-2"></div>
-  </div>
-</section>
+      <div class="card p-4 dark:bg-slate-900">
+        <h3 class="font-semibold mb-2">إضافة/تعديل طالب</h3>
+        <form id="studentForm" class="grid gap-3 sm:grid-cols-2">
+          <input type="hidden" id="studentId" />
+          <div class="sm:col-span-2"><label class="text-sm">الاسم الكامل</label><input id="studentName" class="input" required /></div>
+          <div><label class="text-sm">المجموعة</label><select id="studentGroup" class="input"></select></div>
+          <div><label class="text-sm">الهاتف (واتساب)</label><input id="studentPhone" class="input" inputmode="tel" /></div>
+          <div class="sm:col-span-2"><label class="text-sm">ملاحظات</label><textarea id="studentNotes" class="input" rows="2"></textarea></div>
+          <div class="sm:col-span-2 flex gap-2">
+            <button class="px-4 py-2 rounded-xl bg-sky-500 text-white" type="submit">حفظ</button>
+            <button id="studentReset" class="px-4 py-2 rounded-xl bg-gray-100 dark:bg-slate-800" type="button">تفريغ</button>
+          </div>
+        </form>
+      </div>
+    </section>
 
-<!-- Reports -->
-<section data-page="reports" class="hidden space-y-4">
-  <div class="card p-4">
-    <div class="grid gap-2 sm:grid-cols-4">
-      <div>
-        <label class="text-sm">الشهر</label>
-        <input id="repMonth" type="month" class="input" />
+    <!-- Sessions & Attendance -->
+    <section data-page="sessions" class="hidden space-y-4">
+      <div class="card p-4 dark:bg-slate-900">
+        <div class="flex items-center gap-2 mb-3">
+          <h2 class="font-semibold">جلسات وحضور</h2>
+          <div class="ms-auto grid grid-cols-2 gap-2 w-full sm:w-auto">
+            <input id="sessionDate" type="date" class="input" />
+            <select id="sessionGroup" class="input"></select>
+          </div>
+        </div>
+        <div id="attendanceArea" class="space-y-2"></div>
       </div>
-      <div>
-        <label class="text-sm">المجموعة</label>
-        <select id="repGroup" class="input"></select>
-      </div>
-      <div class="sm:col-span-2 flex items-end gap-2">
-        <button id="btnRunReport" class="px-4 py-2 rounded-xl bg-sky-500 text-white">توليد التقرير</button>
-        <button id="btnShareWA" class="px-4 py-2 rounded-xl bg-emerald-500 text-white">مشاركة واتساب</button>
-        <button id="btnExportCSV" class="px-4 py-2 rounded-xl bg-gray-100">CSV</button>
-      </div>
-    </div>
-  </div>
-  <div class="card p-4">
-    <h3 class="font-semibold mb-2">ملخص شهري للمجموعة</h3>
-    <div id="groupSummary" class="text-sm"></div>
-  </div>
-  <div class="card p-4">
-    <h3 class="font-semibold mb-2">تقييم كل طالب</h3>
-    <div id="studentTable" class="overflow-auto"></div>
-  </div>
-</section>
+    </section>
 
-<!-- Settings -->
-<section data-page="settings" class="hidden space-y-4">
-  <div class="card p-4 grid gap-3">
-    <h2 class="font-semibold">إعدادات</h2>
-    <div>
-      <label class="text-sm">اسم المعلم</label>
-      <input id="teacherName" class="input" placeholder="اسمك" />
-    </div>
-    <div>
-      <label class="text-sm">المعايير (0 – 5)</label>
-      <div class="text-xs text-gray-500">الحفظ، الورد، القراءة، الانضباط</div>
-    </div>
-    <button id="btnWipe" class="px-4 py-2 rounded-xl bg-rose-500 text-white">حذف كل البيانات (محليًا)</button>
-  </div>
-</section>
+    <!-- Reports -->
+    <section data-page="reports" class="hidden space-y-4">
+      <div class="card p-4 dark:bg-slate-900">
+        <div class="grid gap-2 sm:grid-cols-5">
+          <div>
+            <label class="text-sm">الشهر</label>
+            <input id="repMonth" type="month" class="input" />
+          </div>
+          <div>
+            <label class="text-sm">المجموعة</label>
+            <select id="repGroup" class="input"></select>
+          </div>
+          <div class="sm:col-span-3 flex items-end gap-2">
+            <button id="btnRunReport" class="px-4 py-2 rounded-xl bg-sky-500 text-white">توليد التقرير</button>
+            <button id="btnShareWA" class="px-4 py-2 rounded-xl bg-emerald-500 text-white">واتساب</button>
+            <button id="btnExportCSV" class="px-4 py-2 rounded-xl bg-gray-100 dark:bg-slate-800">CSV</button>
+            <button id="btnExportPDF" class="px-4 py-2 rounded-xl bg-rose-500 text-white">PDF</button>
+          </div>
+        </div>
+      </div>
+      <div id="reportArea" class="space-y-4">
+        <div class="card p-4 dark:bg-slate-900">
+          <h3 class="font-semibold mb-2">ملخص شهري للمجموعة</h3>
+          <div id="groupSummary" class="text-sm"></div>
+        </div>
+        <div class="card p-4 dark:bg-slate-900">
+          <h3 class="font-semibold mb-2">تقييم كل طالب</h3>
+          <div id="studentTable" class="overflow-auto"></div>
+        </div>
+      </div>
+    </section>
 
-  </main>  <!-- FAB -->  <div class="fab hidden-when-print">
+    <!-- Settings -->
+    <section data-page="settings" class="hidden space-y-4">
+      <div class="card p-4 dark:bg-slate-900 grid gap-3">
+        <h2 class="font-semibold">إعدادات</h2>
+        <div>
+          <label class="text-sm">اسم المعلم</label>
+          <input id="teacherName" class="input" placeholder="اسمك" />
+        </div>
+        <div>
+          <label class="text-sm">المعايير (0 – 5)</label>
+          <div class="text-xs text-gray-500 dark:text-gray-400">الحفظ، الورد، القراءة، الانضباط</div>
+        </div>
+        <button id="btnWipe" class="px-4 py-2 rounded-xl bg-rose-500 text-white">حذف كل البيانات (محليًا)</button>
+      </div>
+    </section>
+  </main>
+
+  <!-- FAB -->
+  <div class="fab hidden-when-print">
     <div class="grid gap-2">
       <button id="fabAddGroup" class="px-4 py-3 rounded-2xl bg-sky-600 text-white shadow">+ مجموعة</button>
       <button id="fabAddStudent" class="px-4 py-3 rounded-2xl bg-emerald-600 text-white shadow">+ طالب</button>
       <button id="fabTakeAttendance" class="px-4 py-3 rounded-2xl bg-indigo-600 text-white shadow">+ حضور اليوم</button>
     </div>
-  </div>  <!-- Bottom Nav -->  <nav class="bottom-nav bg-white border-t">
+  </div>
+
+  <!-- Bottom Nav -->
+  <nav class="bottom-nav bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800">
     <div class="max-w-5xl mx-auto grid grid-cols-5 text-center">
       <button data-nav="dashboard" class="nav-btn px-2 py-3 text-sm font-medium">الرئيسية</button>
       <button data-nav="groups" class="nav-btn px-2 py-3 text-sm">المجموعات</button>
@@ -169,7 +188,9 @@
       <button data-nav="sessions" class="nav-btn px-2 py-3 text-sm">الجلسات</button>
       <button data-nav="reports" class="nav-btn px-2 py-3 text-sm">التقارير</button>
     </div>
-  </nav>  <script>
+  </nav>
+
+  <script>
     // ===== Utilities =====
     const $ = (s, r = document) => r.querySelector(s);
     const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
@@ -179,25 +200,17 @@
     const by = (k)=> (a,b)=> (a[k]||'').localeCompare(b[k]||'','ar');
     const toNum = v=> v===''? null : Math.max(0, Math.min(5, Number(v)));
     const fmt = (v)=> v==null? '—' : (Math.round(v*10)/10).toFixed(1);
-    function toast(msg){
-      const el = document.createElement('div');
-      el.className='fixed left-1/2 -translate-x-1/2 bottom-24 bg-black text-white text-sm px-3 py-2 rounded-xl z-50';
-      el.textContent = msg; document.body.appendChild(el);
-      setTimeout(()=> el.remove(), 1500);
-    }
+    function toast(msg){ const el = document.createElement('div'); el.className='fixed left-1/2 -translate-x-1/2 bottom-24 bg-black text-white text-sm px-3 py-2 rounded-xl z-50'; el.textContent = msg; document.body.appendChild(el); setTimeout(()=> el.remove(), 1500); }
+
+    // ===== Theme (Light/Dark) =====
+    const THEME_KEY='halaqah_theme';
+    function applyTheme(t){ document.documentElement.classList.toggle('dark', t==='dark'); localStorage.setItem(THEME_KEY,t); const meta=$('meta[name="theme-color"]'); if(meta) meta.setAttribute('content', t==='dark'? '#0b1220':'#0ea5e9'); $('#btnTheme').textContent = t==='dark'?'الوضع الفاتح':'الوضع الليلي'; }
+    function initTheme(){ const saved = localStorage.getItem(THEME_KEY); const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches; applyTheme(saved|| (prefersDark?'dark':'light')); }
 
     // ===== IndexedDB =====
     const DB_NAME='halaqahDB', DB_VER=1;
     const state = { groups: [], students: [], sessions: [], attendance: [], teacherName: localStorage.getItem('teacherName')||'' };
-    function idb(){
-      return new Promise((res,rej)=>{ const open = indexedDB.open(DB_NAME, DB_VER);
-        open.onupgradeneeded = ()=>{ const db = open.result;
-          if(!db.objectStoreNames.contains('groups')) db.createObjectStore('groups',{keyPath:'id'});
-          if(!db.objectStoreNames.contains('students')) db.createObjectStore('students',{keyPath:'id'});
-          if(!db.objectStoreNames.contains('sessions')) db.createObjectStore('sessions',{keyPath:'id'});
-          if(!db.objectStoreNames.contains('attendance')) db.createObjectStore('attendance',{keyPath:'id'});
-        }; open.onsuccess=()=>res(open.result); open.onerror=()=>rej(open.error); });
-    }
+    function idb(){ return new Promise((res,rej)=>{ const open = indexedDB.open(DB_NAME, DB_VER); open.onupgradeneeded = ()=>{ const db = open.result; if(!db.objectStoreNames.contains('groups')) db.createObjectStore('groups',{keyPath:'id'}); if(!db.objectStoreNames.contains('students')) db.createObjectStore('students',{keyPath:'id'}); if(!db.objectStoreNames.contains('sessions')) db.createObjectStore('sessions',{keyPath:'id'}); if(!db.objectStoreNames.contains('attendance')) db.createObjectStore('attendance',{keyPath:'id'}); }; open.onsuccess=()=>res(open.result); open.onerror=()=>rej(open.error); }); }
     async function idbAll(store){ const db = await idb(); return new Promise((res,rej)=>{ const tx=db.transaction(store,'readonly'); const st=tx.objectStore(store); const req=st.getAll(); req.onsuccess=()=>res(req.result||[]); req.onerror=()=>rej(req.error); }); }
     async function idbPut(store, value){ const db = await idb(); return new Promise((res,rej)=>{ const tx=db.transaction(store,'readwrite'); tx.objectStore(store).put(value); tx.oncomplete=()=>res(true); tx.onerror=()=>rej(tx.error); }); }
     async function idbDel(store, key){ const db = await idb(); return new Promise((res,rej)=>{ const tx=db.transaction(store,'readwrite'); tx.objectStore(store).delete(key); tx.oncomplete=()=>res(true); tx.onerror=()=>rej(tx.error); }); }
@@ -211,9 +224,7 @@
 
     // ===== Load =====
     async function load(){
-      [state.groups, state.students, state.sessions, state.attendance] = await Promise.all([
-        idbAll('groups'), idbAll('students'), idbAll('sessions'), idbAll('attendance')
-      ]);
+      [state.groups, state.students, state.sessions, state.attendance] = await Promise.all([ idbAll('groups'), idbAll('students'), idbAll('sessions'), idbAll('attendance') ]);
       state.groups.sort(by('name')); state.students.sort(by('name'));
       const p = localStorage.getItem('page') || 'dashboard';
       go(p);
@@ -224,25 +235,12 @@
 
     // ===== Renderers =====
     function renderStats(){
-      const stats = [
-        {t:'مجموعات', v: state.groups.length},
-        {t:'طلاب', v: state.students.length},
-        {t:'جلسات', v: state.sessions.length},
-        {t:'تقييمات', v: state.attendance.length}
-      ];
+      const stats = [ {t:'مجموعات', v: state.groups.length}, {t:'طلاب', v: state.students.length}, {t:'جلسات', v: state.sessions.length}, {t:'تقييمات', v: state.attendance.length} ];
       const box = $('#stats'); box.innerHTML='';
-      stats.forEach(s=>{ const d=document.createElement('div'); d.className='p-3 border rounded-xl';
-        const n=document.createElement('div'); n.className='text-2xl font-bold'; n.textContent=s.v;
-        const l=document.createElement('div'); l.className='text-xs text-gray-500'; l.textContent=s.t;
-        d.append(n,l); box.appendChild(d); });
-      // recent sessions
+      stats.forEach(s=>{ const d=document.createElement('div'); d.className='p-3 border border-slate-200 dark:border-slate-800 rounded-xl'; const n=document.createElement('div'); n.className='text-2xl font-bold'; n.textContent=s.v; const l=document.createElement('div'); l.className='text-xs text-gray-500 dark:text-gray-400'; l.textContent=s.t; d.append(n,l); box.appendChild(d); });
       const rec = [...state.attendance].sort((a,b)=> b.date.localeCompare(a.date)).slice(0,6);
       const recBox = $('#recentSessions'); recBox.innerHTML='';
-      rec.forEach(a=>{ const d=document.createElement('div'); d.className='p-2 border rounded-xl text-sm flex gap-2';
-        const st=state.students.find(s=>s.id===a.studentId); const g=state.groups.find(g=>g.id===st?.groupId);
-        d.textContent=`${a.date} • ${st?.name||'—'} • ${g?.name||'—'} • حفظ:${fmt(a.hifz)} ورد:${fmt(a.wird)} قراءة:${fmt(a.reading)} انضباط:${fmt(a.discipline)}`;
-        recBox.appendChild(d);
-      });
+      rec.forEach(a=>{ const d=document.createElement('div'); d.className='p-2 border border-slate-200 dark:border-slate-800 rounded-xl text-sm flex gap-2'; const st=state.students.find(s=>s.id===a.studentId); const g=state.groups.find(g=>g.id===st?.groupId); d.textContent=`${a.date} • ${st?.name||'—'} • ${g?.name||'—'} • حفظ:${fmt(a.hifz)} ورد:${fmt(a.wird)} قراءة:${fmt(a.reading)} انضباط:${fmt(a.discipline)}`; recBox.appendChild(d); });
     }
 
     function renderGroups(){
@@ -251,16 +249,15 @@
       $('#groupsCount').textContent = list.length;
       const container = $('#groupsList'); container.innerHTML='';
       list.forEach(g=>{
-        const row = document.createElement('div'); row.className='p-3 border rounded-xl flex items-center gap-2';
+        const row = document.createElement('div'); row.className='p-3 border border-slate-200 dark:border-slate-800 rounded-xl flex items-center gap-2';
         const name = document.createElement('div'); name.className='font-semibold grow'; name.textContent = g.name;
         const loc = document.createElement('div'); loc.className='chip'; loc.textContent = g.location||'—';
-        const btnEdit = document.createElement('button'); btnEdit.className='px-3 py-1 rounded-xl bg-gray-100 text-sm'; btnEdit.textContent='تعديل';
+        const btnEdit = document.createElement('button'); btnEdit.className='px-3 py-1 rounded-xl bg-gray-100 dark:bg-slate-800 text-sm'; btnEdit.textContent='تعديل';
         const btnDel = document.createElement('button'); btnDel.className='px-3 py-1 rounded-xl bg-rose-100 text-rose-700 text-sm'; btnDel.textContent='حذف';
         btnEdit.onclick = ()=> fillGroupForm(g);
         btnDel.onclick = async ()=>{ if(confirm('حذف المجموعة؟')){ await idbDel('groups', g.id); await cascadeAfterGroupDelete(g.id); await load(); } };
         row.append(name, loc, btnEdit, btnDel); container.appendChild(row);
       });
-      // options for selects
       const opts = ['<option value="">— اختر —</option>'].concat(state.groups.map(g=>`<option value="${g.id}">${g.name}</option>`));
       $('#studentGroup').innerHTML = opts.join('');
       $('#sessionGroup').innerHTML = opts.join('');
@@ -270,24 +267,16 @@
 
     function renderStudents(){
       const q = $('#studentSearch').value?.trim();
-      const list = (q? state.students.filter(s=> (s.name||'').includes(q)) : state.students).map(s=> ({
-        ...s,
-        ini: (s.name||'?').split(/\s+/).map(x=>x[0]).slice(0,2).join(''),
-        groupName: state.groups.find(g=> g.id===s.groupId)?.name||'—',
-        wa: s.phone? `https://wa.me/${s.phone.replace(/\D/g,'')}?text=${encodeURIComponent('السلام عليكم')}` : '#'
-      }));
+      const list = (q? state.students.filter(s=> (s.name||'').includes(q)) : state.students).map(s=> ({ ...s, ini: (s.name||'?').split(/\s+/).map(x=>x[0]).slice(0,2).join(''), groupName: state.groups.find(g=> g.id===s.groupId)?.name||'—', wa: s.phone? `https://wa.me/${s.phone.replace(/\D/g,'')}?text=${encodeURIComponent('السلام عليكم')}` : '#' }));
       $('#studentsCount').textContent = list.length;
       const container = $('#studentsList'); container.innerHTML='';
       list.forEach(s=>{
-        const row = document.createElement('div'); row.className='p-3 border rounded-xl grid grid-cols-[auto_1fr_auto] gap-3 items-center';
+        const row = document.createElement('div'); row.className='p-3 border border-slate-200 dark:border-slate-800 rounded-xl grid grid-cols-[auto_1fr_auto] gap-3 items-center';
         const avatar = document.createElement('div'); avatar.className='w-9 h-9 rounded-full bg-sky-100 grid place-items-center font-bold text-sky-700'; avatar.textContent=s.ini;
-        const nameBox = document.createElement('div');
-        const nm=document.createElement('div'); nm.className='font-semibold'; nm.textContent=s.name;
-        const gn=document.createElement('div'); gn.className='text-xs text-gray-500'; gn.textContent=s.groupName;
-        nameBox.append(nm,gn);
+        const nameBox = document.createElement('div'); const nm=document.createElement('div'); nm.className='font-semibold'; nm.textContent=s.name; const gn=document.createElement('div'); gn.className='text-xs text-gray-500 dark:text-gray-400'; gn.textContent=s.groupName; nameBox.append(nm,gn);
         const actions = document.createElement('div'); actions.className='flex gap-2';
         const aWA = document.createElement('a'); aWA.className='px-3 py-1 rounded-xl bg-emerald-50 text-emerald-700 text-sm'; aWA.target='_blank'; aWA.href=s.wa; aWA.textContent='واتساب';
-        const btnE=document.createElement('button'); btnE.className='px-3 py-1 rounded-xl bg-gray-100 text-sm'; btnE.textContent='تعديل';
+        const btnE=document.createElement('button'); btnE.className='px-3 py-1 rounded-xl bg-gray-100 dark:bg-slate-800 text-sm'; btnE.textContent='تعديل';
         const btnD=document.createElement('button'); btnD.className='px-3 py-1 rounded-xl bg-rose-100 text-rose-700 text-sm'; btnD.textContent='حذف';
         btnE.onclick = ()=> fillStudentForm(s);
         btnD.onclick = async ()=>{ if(confirm('حذف الطالب؟')){ await idbDel('students', s.id); await cascadeAfterStudentDelete(s.id); await load(); } };
@@ -303,23 +292,17 @@
       const container = $('#attendanceArea'); container.innerHTML='';
       if(!studs.length){ container.textContent='أضف الطلاب أولًا.'; return; }
       studs.forEach((s, idx)=>{
-        const card=document.createElement('div'); card.className='p-3 border rounded-xl grid grid-cols-1 gap-2';
+        const card=document.createElement('div'); card.className='p-3 border border-slate-200 dark:border-slate-800 rounded-xl grid grid-cols-1 gap-2';
         const top=document.createElement('div'); top.className='flex items-center gap-2';
-        const i=document.createElement('div'); i.className='w-8 h-8 rounded-full bg-slate-100 grid place-items-center text-xs'; i.textContent=String(idx+1);
+        const i=document.createElement('div'); i.className='w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 grid place-items-center text-xs'; i.textContent=String(idx+1);
         const nm=document.createElement('div'); nm.className='font-semibold'; nm.textContent=s.name;
-        const gn=document.createElement('div'); gn.className='text-xs text-gray-500'; gn.textContent= state.groups.find(g=>g.id===s.groupId)?.name||'—';
+        const gn=document.createElement('div'); gn.className='text-xs text-gray-500 dark:text-gray-400'; gn.textContent= state.groups.find(g=>g.id===s.groupId)?.name||'—';
         const lbl=document.createElement('label'); lbl.className='ms-auto flex items-center gap-1 text-sm';
         const chk=document.createElement('input'); chk.type='checkbox'; chk.dataset.f='present';
         lbl.append(chk, document.createTextNode(' حاضر'));
         top.append(i,nm,gn,lbl);
         const grid=document.createElement('div'); grid.className='grid grid-cols-2 sm:grid-cols-6 gap-2 text-sm';
-        grid.append(
-          makeInput('الحفظ','hifz'),
-          makeInput('الورد','wird'),
-          makeInput('القراءة','reading'),
-          makeInput('الانضباط','discipline'),
-          makeNote()
-        );
+        grid.append( makeInput('الحفظ','hifz'), makeInput('الورد','wird'), makeInput('القراءة','reading'), makeInput('الانضباط','discipline'), makeNote() );
         card.append(top,grid); container.appendChild(card);
         const ex = state.attendance.find(a=> a.studentId===s.id && a.date===date);
         if(ex){ chk.checked=!!ex.present; setVal(card,'hifz',ex.hifz); setVal(card,'wird',ex.wird); setVal(card,'reading',ex.reading); setVal(card,'discipline',ex.discipline); setVal(card,'note',ex.note||''); }
@@ -328,8 +311,8 @@
       ensureSession(date, gid||null);
     }
     function setVal(card,key,val){ const el = card.querySelector(`[data-f="${key}"]`); if(!el) return; if(el.tagName==='INPUT' && el.type==='number') el.value = val??''; else if(el.tagName==='TEXTAREA') el.value = val??''; else if(el.type==='checkbox') el.checked=!!val; }
-    function makeInput(labelTxt, key){ const w=document.createElement('div'); const l=document.createElement('div'); l.className='text-xs text-gray-500'; l.textContent=labelTxt; const i=document.createElement('input'); i.type='number'; i.min='0'; i.max='5'; i.step='0.5'; i.placeholder='0–5'; i.className='input'; i.dataset.f=key; w.append(l,i); return w; }
-    function makeNote(){ const w=document.createElement('div'); w.className='sm:col-span-2'; const l=document.createElement('div'); l.className='text-xs text-gray-500'; l.textContent='ملاحظة'; const t=document.createElement('textarea'); t.rows=1; t.className='input'; t.dataset.f='note'; w.append(l,t); return w; }
+    function makeInput(labelTxt, key){ const w=document.createElement('div'); const l=document.createElement('div'); l.className='text-xs text-gray-500 dark:text-gray-400'; l.textContent=labelTxt; const i=document.createElement('input'); i.type='number'; i.min='0'; i.max='5'; i.step='0.5'; i.placeholder='0–5'; i.className='input'; i.dataset.f=key; w.append(l,i); return w; }
+    function makeNote(){ const w=document.createElement('div'); w.className='sm:col-span-2'; const l=document.createElement('div'); l.className='text-xs text-gray-500 dark:text-gray-400'; l.textContent='ملاحظة'; const t=document.createElement('textarea'); t.rows=1; t.className='input'; t.dataset.f='note'; w.append(l,t); return w; }
     function collectAttendanceRow(card){ return { present: card.querySelector('[data-f="present"]').checked, hifz: toNum(card.querySelector('[data-f="hifz"]').value), wird: toNum(card.querySelector('[data-f="wird"]').value), reading: toNum(card.querySelector('[data-f="reading"]').value), discipline: toNum(card.querySelector('[data-f="discipline"]').value), note: card.querySelector('[data-f="note"]').value?.trim()||'' }; }
 
     async function ensureSession(date, groupId){ const exist = state.sessions.find(s=> s.date===date && s.groupId===(groupId||null)); if(!exist){ const s={id:uid(), date, groupId:groupId||null}; await idbPut('sessions', s); state.sessions.push(s); }}
@@ -342,32 +325,26 @@
       const inMonth = state.attendance.filter(a=> a.date.startsWith(month));
       const aByStu = new Map();
       inMonth.forEach(a=>{ const stu = state.students.find(s=> s.id===a.studentId); if(!stu) return; if(gid && stu.groupId!==gid) return; const arr = aByStu.get(stu.id)||[]; arr.push(a); aByStu.set(stu.id, arr); });
-
-      // Summary
       const totalDays = new Set(inMonth.map(a=> a.date)).size;
       const rows = [];
       aByStu.forEach((arr, sid)=>{
         const stu = state.students.find(s=> s.id===sid);
         const prs = arr.filter(x=> x.present).length;
         const avg = k=>{ const vals=arr.map(x=> x[k]).filter(v=> v!=null); if(!vals.length) return null; return vals.reduce((p,c)=>p+c,0)/vals.length; };
-        rows.push({name:stu.name, group: state.groups.find(g=>g.id===stu.groupId)?.name||'—',
-          present: prs, rate: totalDays? Math.round((prs/totalDays)*100):0,
-          hifz: avg('hifz'), wird: avg('wird'), reading: avg('reading'), discipline: avg('discipline')});
+        rows.push({name:stu.name, group: state.groups.find(g=>g.id===stu.groupId)?.name||'—', present: prs, rate: totalDays? Math.round((prs/totalDays)*100):0, hifz: avg('hifz'), wird: avg('wird'), reading: avg('reading'), discipline: avg('discipline')});
       });
       rows.sort((a,b)=> a.group.localeCompare(b.group,'ar') || a.name.localeCompare(b.name,'ar'));
-
       const sumBox = $('#groupSummary');
       const allPrs = rows.reduce((p,r)=> p+r.present,0);
       sumBox.textContent = `الأيام المسجّلة: ${totalDays} • عدد الطلاب: ${rows.length} • مجموع الحضور: ${allPrs}`;
-
       const tblBox = $('#studentTable'); tblBox.innerHTML='';
       const table = document.createElement('table'); table.className='w-full text-sm';
-      table.innerHTML = `<thead><tr class="text-left border-b">
+      table.innerHTML = `<thead><tr class="text-left border-b border-slate-200 dark:border-slate-800">
         <th class="p-2">الطالب</th><th class="p-2">المجموعة</th><th class="p-2">حضور</th><th class="p-2">نسبة</th>
         <th class="p-2">حفظ</th><th class="p-2">ورد</th><th class="p-2">قراءة</th><th class="p-2">انضباط</th>
       </tr></thead>`;
       const tb = document.createElement('tbody');
-      rows.forEach(r=>{ const tr=document.createElement('tr'); tr.className='border-b hover:bg-slate-50';
+      rows.forEach(r=>{ const tr=document.createElement('tr'); tr.className='border-b border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/60';
         tr.innerHTML=`<td class="p-2">${r.name}</td><td class="p-2">${r.group}</td><td class="p-2">${r.present}</td><td class="p-2">${r.rate}%</td>
           <td class="p-2">${fmt(r.hifz)}</td><td class="p-2">${fmt(r.wird)}</td><td class="p-2">${fmt(r.reading)}</td><td class="p-2">${fmt(r.discipline)}</td>`;
         tb.appendChild(tr);
@@ -376,67 +353,31 @@
       return {month, gid, rows, totalDays};
     }
 
-    function exportCSV(report){
-      const head = ['الطالب','المجموعة','الحضور','النسبة %','الحفظ','الورد','القراءة','الانضباط'];
-      const lines = [head.join(',')].concat(report.rows.map(r=> [r.name,r.group,r.present,r.rate,fmt(r.hifz),fmt(r.wird),fmt(r.reading),fmt(r.discipline)].join(',')));
-      const blob = new Blob(["\ufeff" + lines.join('\n')], {type:'text/csv;charset=utf-8;'});
-      const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `report_${report.month}.csv`; a.click(); URL.revokeObjectURL(a.href);
-    }
+    function exportCSV(report){ const head = ['الطالب','المجموعة','الحضور','النسبة %','الحفظ','الورد','القراءة','الانضباط']; const lines = [head.join(',')].concat(report.rows.map(r=> [r.name,r.group,r.present,r.rate,fmt(r.hifz),fmt(r.wird),fmt(r.reading),fmt(r.discipline)].join(','))); const blob = new Blob(["\ufeff" + lines.join('\n')], {type:'text/csv;charset=utf-8;'}); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `report_${report.month}.csv`; a.click(); URL.revokeObjectURL(a.href); }
 
-    function shareWhatsApp(report){
-      const tname = state.teacherName? `\nالمعلم: ${state.teacherName}` : '';
-      const lines = report.rows.slice(0,20).map((r,i)=> `${i+1}. ${r.name} – حضور:${r.present}/${report.totalDays} (${r.rate}%) – حفظ:${fmt(r.hifz)} – ورد:${fmt(r.wird)} – قراءة:${fmt(r.reading)} – انضباط:${fmt(r.discipline)}`);
-      const msg = `تقرير ${report.month}${tname}\nالمجموعة: ${($('#repGroup').value? (state.groups.find(g=>g.id===$('#repGroup').value)?.name):'الكل')}\n\n${lines.join('\n')}`;
-      const url = 'https://wa.me/?text=' + encodeURIComponent(msg);
-      window.open(url, '_blank');
-    }
+    function exportPDF(){ try{ const el = $('#reportArea'); const month = $('#repMonth').value || monthKey(todayStr()); const opt = { margin: 10, filename: `report_${month}.pdf`, image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 2 }, jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' } }; window.html2pdf().set(opt).from(el).save(); }catch(e){ alert('تعذر إنشاء PDF (تأكد من الاتصال بالإنترنت لأول مرة)'); } }
+
+    function shareWhatsApp(report){ const tname = state.teacherName? `\nالمعلم: ${state.teacherName}` : ''; const lines = report.rows.slice(0,20).map((r,i)=> `${i+1}. ${r.name} – حضور:${r.present}/${report.totalDays} (${r.rate}%) – حفظ:${fmt(r.hifz)} – ورد:${fmt(r.wird)} – قراءة:${fmt(r.reading)} – انضباط:${fmt(r.discipline)}`); const msg = `تقرير ${report.month}${tname}\nالمجموعة: ${($('#repGroup').value? (state.groups.find(g=>g.id===$('#repGroup').value)?.name):'الكل')}\n\n${lines.join('\n')}`; const url = 'https://wa.me/?text=' + encodeURIComponent(msg); window.open(url, '_blank'); }
 
     // ===== Forms =====
-    $('#groupForm').addEventListener('submit', async (e)=>{ e.preventDefault();
-      const id = $('#groupId').value || uid();
-      const rec = { id, name: $('#groupName').value.trim(), location: $('#groupLocation').value.trim(), notes: $('#groupNotes').value.trim() };
-      if(!rec.name){ toast('اكتب اسم المجموعة'); return; }
-      await idbPut('groups', rec);
-      $('#groupForm').reset(); $('#groupId').value=''; toast('تم حفظ المجموعة'); await load();
-    });
+    $('#groupForm').addEventListener('submit', async (e)=>{ e.preventDefault(); const id = $('#groupId').value || uid(); const rec = { id, name: $('#groupName').value.trim(), location: $('#groupLocation').value.trim(), notes: $('#groupNotes').value.trim() }; if(!rec.name){ toast('اكتب اسم المجموعة'); return; } await idbPut('groups', rec); $('#groupForm').reset(); $('#groupId').value=''; toast('تم حفظ المجموعة'); await load(); });
     $('#groupReset').onclick = ()=> { $('#groupForm').reset(); $('#groupId').value=''; };
 
-    $('#studentForm').addEventListener('submit', async (e)=>{ e.preventDefault();
-      const id = $('#studentId').value || uid();
-      const rec = { id, name: $('#studentName').value.trim(), groupId: $('#studentGroup').value||'', phone: $('#studentPhone').value.trim(), notes: $('#studentNotes').value.trim() };
-      if(!rec.name){ toast('اكتب اسم الطالب'); return; }
-      await idbPut('students', rec);
-      $('#studentForm').reset(); $('#studentId').value=''; toast('تم حفظ الطالب'); await load();
-    });
+    $('#studentForm').addEventListener('submit', async (e)=>{ e.preventDefault(); const id = $('#studentId').value || uid(); const rec = { id, name: $('#studentName').value.trim(), groupId: $('#studentGroup').value||'', phone: $('#studentPhone').value.trim(), notes: $('#studentNotes').value.trim() }; if(!rec.name){ toast('اكتب اسم الطالب'); return; } await idbPut('students', rec); $('#studentForm').reset(); $('#studentId').value=''; toast('تم حفظ الطالب'); await load(); });
     $('#studentReset').onclick = ()=> { $('#studentForm').reset(); $('#studentId').value=''; };
 
-    $('#groupSearch').oninput = renderGroups; $('#studentSearch').oninput = renderStudents;
-    $('#sessionDate').onchange = renderAttendance; $('#sessionGroup').onchange = renderAttendance;
+    $('#groupSearch').oninput = renderGroups; $('#studentSearch').oninput = renderStudents; $('#sessionDate').onchange = renderAttendance; $('#sessionGroup').onchange = renderAttendance;
 
     $('#btnRunReport').onclick = ()=> buildReport();
     $('#btnExportCSV').onclick = ()=> exportCSV(buildReport());
     $('#btnShareWA').onclick = ()=> shareWhatsApp(buildReport());
+    $('#btnExportPDF').onclick = ()=> { buildReport(); exportPDF(); };
+    $('#btnPDFQuick').onclick = ()=> { go('reports'); buildReport(); exportPDF(); };
 
     // ===== Header actions =====
     $('#btnPrint').onclick = ()=> window.print();
-    $('#btnExport').onclick = async ()=>{
-      const dump = { groups: state.groups, students: state.students, sessions: state.sessions, attendance: state.attendance, teacherName: state.teacherName };
-      const blob = new Blob([JSON.stringify(dump,null,2)], {type: 'application/json'});
-      const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'halaqah_backup.json'; a.click(); URL.revokeObjectURL(a.href);
-    };
-    $('#importFile').onchange = async (e)=>{
-      const f = e.target.files?.[0]; if(!f) return; const txt = await f.text();
-      try{ const data = JSON.parse(txt);
-        await idbClearAll();
-        for(const g of (data.groups||[])) await idbPut('groups', g);
-        for(const s of (data.students||[])) await idbPut('students', s);
-        for(const x of (data.sessions||[])) await idbPut('sessions', x);
-        for(const a of (data.attendance||[])) await idbPut('attendance', a);
-        if(data.teacherName) localStorage.setItem('teacherName', data.teacherName);
-        toast('تم الاستيراد بنجاح'); await load();
-      }catch(err){ alert('ملف غير صالح'); }
-      e.target.value='';
-    };
+    $('#btnExport').onclick = async ()=>{ const dump = { groups: state.groups, students: state.students, sessions: state.sessions, attendance: state.attendance, teacherName: state.teacherName }; const blob = new Blob([JSON.stringify(dump,null,2)], {type: 'application/json'}); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'halaqah_backup.json'; a.click(); URL.revokeObjectURL(a.href); };
+    $('#importFile').onchange = async (e)=>{ const f = e.target.files?.[0]; if(!f) return; const txt = await f.text(); try{ const data = JSON.parse(txt); await idbClearAll(); for(const g of (data.groups||[])) await idbPut('groups', g); for(const s of (data.students||[])) await idbPut('students', s); for(const x of (data.sessions||[])) await idbPut('sessions', x); for(const a of (data.attendance||[])) await idbPut('attendance', a); if(data.teacherName) localStorage.setItem('teacherName', data.teacherName); toast('تم الاستيراد بنجاح'); await load(); }catch(err){ alert('ملف غير صالح'); } e.target.value=''; };
 
     // ===== Settings =====
     $('#teacherName').onchange = (e)=>{ state.teacherName = e.target.value.trim(); localStorage.setItem('teacherName', state.teacherName); };
@@ -447,25 +388,30 @@
     $('#fabAddStudent').onclick = ()=> { go('students'); $('#studentForm').scrollIntoView({behavior:'smooth'}); };
     $('#fabTakeAttendance').onclick = ()=> { go('sessions'); $('#attendanceArea').scrollIntoView({behavior:'smooth'}); };
 
+    // ===== Theme toggle
+    $('#btnTheme').onclick = ()=>{ const cur = localStorage.getItem(THEME_KEY)||'light'; applyTheme(cur==='dark'?'light':'dark'); };
+
     // ===== Render All =====
     function renderAll(){ renderStats(); renderGroups(); renderStudents(); renderAttendance(); }
 
     // ===== Cascades =====
-    async function cascadeAfterGroupDelete(groupId){
-      // remove students in group and their attendance
-      const studs = state.students.filter(s=> s.groupId===groupId);
-      for(const s of studs){ await idbDel('students', s.id); state.students = state.students.filter(x=> x.id!==s.id); await cascadeAfterStudentDelete(s.id); }
-      // unlink sessions (optional keep)
-      state.sessions = state.sessions.filter(x=> x.groupId!==groupId);
-      for(const ss of state.sessions){ await idbPut('sessions', ss); }
-    }
-    async function cascadeAfterStudentDelete(studentId){
-      const att = state.attendance.filter(a=> a.studentId===studentId);
-      for(const a of att){ await idbDel('attendance', a.id); }
-      state.attendance = state.attendance.filter(a=> a.studentId!==studentId);
+    async function cascadeAfterGroupDelete(groupId){ const studs = state.students.filter(s=> s.groupId===groupId); for(const s of studs){ await idbDel('students', s.id); state.students = state.students.filter(x=> x.id!==s.id); await cascadeAfterStudentDelete(s.id); } state.sessions = state.sessions.filter(x=> x.groupId!==groupId); for(const ss of state.sessions){ await idbPut('sessions', ss); } }
+    async function cascadeAfterStudentDelete(studentId){ const att = state.attendance.filter(a=> a.studentId===studentId); for(const a of att){ await idbDel('attendance', a.id); } state.attendance = state.attendance.filter(a=> a.studentId!==studentId); }
+
+    // ===== PWA: Manifest + Service Worker + Install Prompt =====
+    function registerManifest(){ const manifest = { name:'إدارة حلقات التحفيظ', short_name:'الحلقات', start_url:'./', scope:'./', display:'standalone', dir:'rtl', lang:'ar', theme_color: document.documentElement.classList.contains('dark')? '#0b1220':'#0ea5e9', background_color: document.documentElement.classList.contains('dark')? '#0b1220':'#ffffff' }; const blob = new Blob([JSON.stringify(manifest)], {type:'application/json'}); const url = URL.createObjectURL(blob); let link = document.querySelector('link[rel="manifest"]'); if(!link){ link = document.createElement('link'); link.rel='manifest'; document.head.appendChild(link); } link.href=url; }
+
+    async function registerSW(){ if(!('serviceWorker' in navigator)) return; const swCode = `const CACHE='halaqah-cache-v1'; self.addEventListener('install',e=>{ e.waitUntil(caches.open(CACHE).then(c=>c.addAll([self.registration.scope]))); }); self.addEventListener('activate',e=>{ e.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k!==CACHE).map(k=>caches.delete(k))))); }); self.addEventListener('fetch',e=>{ const url=new URL(e.request.url); if(url.origin===location.origin){ e.respondWith(caches.match(e.request).then(r=> r||fetch(e.request).then(res=>{ const copy=res.clone(); caches.open(CACHE).then(c=>c.put(e.request,copy)); return res; }))); } });`;
+      const swUrl = URL.createObjectURL(new Blob([swCode], {type:'text/javascript'}));
+      try{ await navigator.serviceWorker.register(swUrl); }catch(err){ console.warn('SW register failed', err); }
     }
 
+    let deferredPrompt=null; window.addEventListener('beforeinstallprompt', (e)=>{ e.preventDefault(); deferredPrompt=e; $('#btnInstall').classList.remove('hidden'); });
+    $('#btnInstall').onclick = async ()=>{ if(!deferredPrompt) return; deferredPrompt.prompt(); const {outcome} = await deferredPrompt.userChoice; if(outcome==='accepted') toast('تم التثبيت'); deferredPrompt=null; $('#btnInstall').classList.add('hidden'); };
+    window.addEventListener('appinstalled', ()=>{ toast('تم التثبيت كتطبيق'); $('#btnInstall').classList.add('hidden'); });
+
     // ===== Go! =====
-    window.addEventListener('load', load);
-  </script></body>
+    window.addEventListener('load', async ()=>{ initTheme(); registerManifest(); await registerSW(); await load(); });
+  </script>
+</body>
 </html>
