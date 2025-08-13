@@ -1,0 +1,1085 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>مدير المصروفات الشخصي</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #4361ee;
+            --secondary-color: #3f37c9;
+            --accent-color: #4cc9f0;
+            --danger-color: #f72585;
+            --success-color: #4ad66d;
+            --text-color: #2b2d42;
+            --light-gray: #f8f9fa;
+            --medium-gray: #e9ecef;
+            --dark-gray: #6c757d;
+            --white: #ffffff;
+            --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--light-gray);
+            color: var(--text-color);
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 100%;
+            padding: 15px;
+            margin: 0 auto;
+        }
+
+        header {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: var(--white);
+            padding: 1rem;
+            border-radius: 0 0 15px 15px;
+            box-shadow: var(--shadow);
+            margin-bottom: 1.5rem;
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 1.8rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .app-version {
+            font-size: 0.8rem;
+            opacity: 0.8;
+        }
+
+        .card {
+            background-color: var(--white);
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: var(--shadow);
+        }
+
+        .form-group {
+            margin-bottom: 1.2rem;
+            position: relative;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: var(--secondary-color);
+        }
+
+        input, select {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid var(--medium-gray);
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.3s;
+        }
+
+        input:focus, select:focus {
+            border-color: var(--primary-color);
+            outline: none;
+        }
+
+        .suggestions-container {
+            position: relative;
+        }
+
+        .suggestions-list {
+            position: absolute;
+            width: 100%;
+            max-height: 200px;
+            overflow-y: auto;
+            background: var(--white);
+            border: 1px solid var(--medium-gray);
+            border-radius: 0 0 8px 8px;
+            z-index: 100;
+            box-shadow: var(--shadow);
+            display: none;
+        }
+
+        .suggestion-item {
+            padding: 10px 15px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .suggestion-item:hover {
+            background-color: var(--light-gray);
+        }
+
+        .buttons-container {
+            display: flex;
+            gap: 10px;
+            margin-top: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            flex: 1;
+            min-width: 120px;
+        }
+
+        .btn-primary {
+            background-color: var(--primary-color);
+            color: var(--white);
+        }
+
+        .btn-primary:hover {
+            background-color: var(--secondary-color);
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary {
+            background-color: var(--medium-gray);
+            color: var(--text-color);
+        }
+
+        .btn-secondary:hover {
+            background-color: var(--dark-gray);
+            color: var(--white);
+        }
+
+        .btn-danger {
+            background-color: var(--danger-color);
+            color: var(--white);
+        }
+
+        .btn-danger:hover {
+            background-color: #d1146a;
+        }
+
+        .btn-success {
+            background-color: var(--success-color);
+            color: var(--white);
+        }
+
+        .btn-success:hover {
+            background-color: #3ac25a;
+        }
+
+        .btn-sm {
+            padding: 8px 12px;
+            font-size: 0.9rem;
+        }
+
+        .table-container {
+            overflow-x: auto;
+            margin-bottom: 1.5rem;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 1rem;
+        }
+
+        th, td {
+            padding: 12px 15px;
+            text-align: right;
+            border-bottom: 1px solid var(--medium-gray);
+        }
+
+        th {
+            background-color: var(--primary-color);
+            color: var(--white);
+            font-weight: 600;
+            position: sticky;
+            top: 0;
+        }
+
+        tr:nth-child(even) {
+            background-color: var(--light-gray);
+        }
+
+        tr:hover {
+            background-color: rgba(67, 97, 238, 0.1);
+        }
+
+        .actions-cell {
+            display: flex;
+            gap: 8px;
+            justify-content: flex-start;
+        }
+
+        .chart-container {
+            background-color: var(--white);
+            border-radius: 10px;
+            padding: 1rem;
+            margin-bottom: 1.5rem;
+            box-shadow: var(--shadow);
+            height: 300px;
+        }
+
+        .stats-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .stat-card {
+            background-color: var(--white);
+            border-radius: 10px;
+            padding: 1rem;
+            box-shadow: var(--shadow);
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--primary-color);
+            margin: 0.5rem 0;
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            color: var(--dark-gray);
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .file-input {
+            display: none;
+        }
+
+        /* Mobile specific styles */
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+
+            .card {
+                padding: 1rem;
+            }
+
+            .buttons-container {
+                flex-direction: column;
+            }
+
+            .btn {
+                width: 100%;
+            }
+
+            th, td {
+                padding: 8px 10px;
+                font-size: 0.9rem;
+            }
+
+            .actions-cell {
+                flex-direction: column;
+                gap: 5px;
+            }
+
+            .btn-sm {
+                width: 100%;
+            }
+        }
+
+        /* Animation */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.3s ease-out forwards;
+        }
+
+        /* Swipe to delete */
+        .swipeable-row {
+            position: relative;
+            overflow: hidden;
+        }
+
+        .swipe-content {
+            position: relative;
+            z-index: 1;
+            background: inherit;
+        }
+
+        .swipe-actions {
+            position: absolute;
+            top: 0;
+            right: -100%;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            transition: right 0.3s ease;
+        }
+
+        .swipe-actions.visible {
+            right: 0;
+        }
+
+        .swipe-delete {
+            flex: 1;
+            background-color: var(--danger-color);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            padding-right: 20px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>مدير المصروفات الشخصي</h1>
+        <div class="app-version">الإصدار 2.0</div>
+    </header>
+
+    <div class="container">
+        <!-- Expense Form Card -->
+        <div class="card fade-in" id="formCard">
+            <div class="form-group">
+                <label for="amount">المبلغ (ريال):</label>
+                <input type="number" id="amount" step="0.01" placeholder="أدخل المبلغ" required>
+            </div>
+
+            <div class="form-group">
+                <label for="description">الوصف:</label>
+                <div class="suggestions-container">
+                    <input type="text" id="description" placeholder="أدخل وصف المصروف" required>
+                    <div class="suggestions-list" id="descriptionSuggestions"></div>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="category">الفئة:</label>
+                <div class="suggestions-container">
+                    <input type="text" id="category" placeholder="اختر أو أدخل فئة" list="categoryList" required>
+                    <datalist id="categoryList"></datalist>
+                    <div class="suggestions-list" id="categorySuggestions"></div>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="date">التاريخ:</label>
+                <input type="date" id="date" required>
+            </div>
+
+            <div class="buttons-container">
+                <button type="button" id="saveBtn" class="btn btn-primary">
+                    <i class="fas fa-save"></i> حفظ
+                </button>
+                <button type="button" id="cancelBtn" class="btn btn-secondary hidden">
+                    <i class="fas fa-times"></i> إلغاء
+                </button>
+                <button type="button" id="clearBtn" class="btn btn-secondary">
+                    <i class="fas fa-eraser"></i> مسح
+                </button>
+            </div>
+        </div>
+
+        <!-- Stats Cards -->
+        <div class="stats-container fade-in">
+            <div class="stat-card">
+                <div class="stat-label">المصروف اليوم</div>
+                <div class="stat-value" id="todayTotal">0.00</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">المصروف الشهري</div>
+                <div class="stat-value" id="monthlyTotal">0.00</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">إجمالي المصروفات</div>
+                <div class="stat-value" id="overallTotal">0.00</div>
+            </div>
+        </div>
+
+        <!-- Expenses Table -->
+        <div class="card fade-in">
+            <h2 style="margin-bottom: 1rem;">سجل المصروفات</h2>
+            <div class="table-container">
+                <table id="expensesTable">
+                    <thead>
+                        <tr>
+                            <th>التاريخ</th>
+                            <th>المبلغ</th>
+                            <th>الوصف</th>
+                            <th>الفئة</th>
+                            <th>إجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Monthly Chart -->
+        <div class="chart-container fade-in">
+            <canvas id="monthlyChart"></canvas>
+        </div>
+
+        <!-- Backup/Restore Card -->
+        <div class="card fade-in">
+            <h2 style="margin-bottom: 1rem;">النسخ الاحتياطي</h2>
+            <div class="buttons-container">
+                <button type="button" id="exportBtn" class="btn btn-success">
+                    <i class="fas fa-file-export"></i> تصدير البيانات
+                </button>
+                <button type="button" id="importBtn" class="btn btn-secondary">
+                    <i class="fas fa-file-import"></i> استيراد البيانات
+                </button>
+                <input type="file" id="fileInput" class="file-input" accept=".json">
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Initialize database and variables
+        let db;
+        const dbName = "ExpenseDB";
+        const storeName = "expenses";
+        const backupKey = "expenseManagerBackup_v2";
+        let monthlyChart;
+        let currentEditId = null;
+        let touchStartX = 0;
+        let touchEndX = 0;
+
+        // Common categories
+        const commonCategories = [
+            "طعام", "مواصلات", "تسوق", "ترفيه", 
+            "فواتير", "صحة", "تعليم", "هدايا", "أخرى"
+        ];
+
+        // Initialize the application
+        document.addEventListener('DOMContentLoaded', async function() {
+            // Set today's date as default
+            const today = new Date();
+            document.getElementById('date').valueAsDate = today;
+            
+            // Initialize database
+            await initDB();
+            
+            // Try to import from localStorage backup
+            await tryImportFromBackup();
+            
+            // Load expenses and update UI
+            await loadAndUpdateUI();
+            
+            // Initialize auto-suggestions
+            initAutoSuggest();
+            
+            // Add event listeners
+            setupEventListeners();
+            
+            // Save data before window closes
+            window.addEventListener('beforeunload', createBackup);
+        });
+
+        // Initialize IndexedDB
+        function initDB() {
+            return new Promise((resolve, reject) => {
+                const request = indexedDB.open(dbName, 2); // Version 2
+                
+                request.onupgradeneeded = function(event) {
+                    db = event.target.result;
+                    if (!db.objectStoreNames.contains(storeName)) {
+                        const store = db.createObjectStore(storeName, { keyPath: 'id', autoIncrement: true });
+                        store.createIndex('date', 'date', { unique: false });
+                        store.createIndex('description', 'description', { unique: false });
+                        store.createIndex('category', 'category', { unique: false });
+                    }
+                };
+                
+                request.onsuccess = function(event) {
+                    db = event.target.result;
+                    resolve();
+                };
+                
+                request.onerror = function(event) {
+                    console.error("Error opening DB", event.target.error);
+                    reject(event.target.error);
+                };
+            });
+        }
+
+        // Try to import from localStorage backup
+        async function tryImportFromBackup() {
+            const backup = localStorage.getItem(backupKey);
+            if (backup) {
+                try {
+                    const expenses = JSON.parse(backup);
+                    
+                    if (Array.isArray(expenses) && expenses.length > 0) {
+                        // Check if DB is empty before importing
+                        const currentExpenses = await getAllExpenses();
+                        if (currentExpenses.length === 0) {
+                            await importExpenses(expenses);
+                            console.log("Successfully imported from backup");
+                        }
+                    }
+                } catch (error) {
+                    console.error("Error parsing backup data", error);
+                    localStorage.removeItem(backupKey);
+                }
+            }
+        }
+
+        // Create backup in localStorage
+        async function createBackup() {
+            const expenses = await getAllExpenses();
+            if (expenses.length > 0) {
+                localStorage.setItem(backupKey, JSON.stringify(expenses));
+                console.log("Backup created");
+            }
+        }
+
+        // Get all expenses from DB
+        function getAllExpenses() {
+            return new Promise((resolve, reject) => {
+                const transaction = db.transaction([storeName], 'readonly');
+                const store = transaction.objectStore(storeName);
+                const request = store.getAll();
+                
+                request.onsuccess = function() {
+                    resolve(request.result);
+                };
+                
+                request.onerror = function(event) {
+                    console.error("Error loading expenses", event.target.error);
+                    reject(event.target.error);
+                };
+            });
+        }
+
+        // Load expenses and update all UI elements
+        async function loadAndUpdateUI() {
+            const expenses = await getAllExpenses();
+            displayExpenses(expenses);
+            updateMonthlyChart(expenses);
+            updateStats(expenses);
+            updateSuggestions(expenses);
+        }
+
+        // Display expenses in table
+        function displayExpenses(expenses) {
+            const tbody = document.querySelector('#expensesTable tbody');
+            tbody.innerHTML = '';
+            
+            // Sort by date (newest first)
+            expenses.sort((a, b) => new Date(b.date) - new Date(a.date));
+            
+            expenses.forEach(expense => {
+                const row = document.createElement('tr');
+                row.className = 'swipeable-row';
+                
+                row.innerHTML = `
+                    <td class="swipe-content">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <span>${formatDate(expense.date)}</span>
+                            <div class="actions-cell">
+                                <button onclick="editExpense(${expense.id})" class="btn btn-secondary btn-sm">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button onclick="deleteExpense(${expense.id})" class="btn btn-danger btn-sm">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="swipe-content">${expense.amount.toFixed(2)}</td>
+                    <td class="swipe-content">${expense.description}</td>
+                    <td class="swipe-content">${expense.category}</td>
+                    <td class="swipe-content"></td>
+                    <div class="swipe-actions">
+                        <div class="swipe-delete" onclick="deleteExpense(${expense.id})">
+                            <i class="fas fa-trash"></i> حذف
+                        </div>
+                    </div>
+                `;
+                
+                // Add touch events for swipe to delete
+                const swipeContent = row.querySelector('.swipe-content');
+                const swipeActions = row.querySelector('.swipe-actions');
+                
+                swipeContent.addEventListener('touchstart', (e) => {
+                    touchStartX = e.changedTouches[0].screenX;
+                }, false);
+                
+                swipeContent.addEventListener('touchend', (e) => {
+                    touchEndX = e.changedTouches[0].screenX;
+                    handleSwipeGesture(swipeActions);
+                }, false);
+                
+                tbody.appendChild(row);
+            });
+        }
+
+        // Handle swipe gestures for mobile
+        function handleSwipeGesture(swipeActions) {
+            const difference = touchStartX - touchEndX;
+            
+            // Swipe left (show delete)
+            if (difference > 50) {
+                document.querySelectorAll('.swipe-actions').forEach(el => {
+                    el.classList.remove('visible');
+                });
+                swipeActions.classList.add('visible');
+            } 
+            // Swipe right (hide delete)
+            else if (difference < -50) {
+                swipeActions.classList.remove('visible');
+            }
+        }
+
+        // Update statistics
+        function updateStats(expenses) {
+            const today = new Date().toISOString().slice(0, 10);
+            const currentMonth = new Date().toISOString().slice(0, 7);
+            
+            const todayTotal = expenses
+                .filter(e => e.date === today)
+                .reduce((sum, e) => sum + e.amount, 0);
+                
+            const monthlyTotal = expenses
+                .filter(e => e.date.slice(0, 7) === currentMonth)
+                .reduce((sum, e) => sum + e.amount, 0);
+                
+            const overallTotal = expenses
+                .reduce((sum, e) => sum + e.amount, 0);
+                
+            document.getElementById('todayTotal').textContent = todayTotal.toFixed(2);
+            document.getElementById('monthlyTotal').textContent = monthlyTotal.toFixed(2);
+            document.getElementById('overallTotal').textContent = overallTotal.toFixed(2);
+        }
+
+        // Update monthly chart
+        function updateMonthlyChart(expenses) {
+            const monthlyTotals = {};
+            
+            expenses.forEach(expense => {
+                const date = new Date(expense.date);
+                const monthYear = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+                
+                if (!monthlyTotals[monthYear]) {
+                    monthlyTotals[monthYear] = 0;
+                }
+                
+                monthlyTotals[monthYear] += expense.amount;
+            });
+            
+            // Sort months chronologically
+            const sortedMonths = Object.keys(monthlyTotals).sort();
+            const labels = sortedMonths.map(month => formatMonthYear(month));
+            const data = sortedMonths.map(month => monthlyTotals[month]);
+            
+            const ctx = document.getElementById('monthlyChart').getContext('2d');
+            
+            if (monthlyChart) {
+                monthlyChart.data.labels = labels;
+                monthlyChart.data.datasets[0].data = data;
+                monthlyChart.update();
+            } else {
+                monthlyChart = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: 'إجمالي المصروفات الشهرية',
+                            data: data,
+                            backgroundColor: 'rgba(67, 97, 238, 0.7)',
+                            borderColor: 'rgba(67, 97, 238, 1)',
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                title: {
+                                    display: true,
+                                    text: 'المبلغ (ريال)'
+                                }
+                            },
+                            x: {
+                                title: {
+                                    display: true,
+                                    text: 'الشهر'
+                                }
+                            }
+                        },
+                        plugins: {
+                            legend: {
+                                display: false
+                            }
+                        }
+                    }
+                });
+            }
+        }
+
+        // Initialize auto-suggest functionality
+        function initAutoSuggest() {
+            const descriptionInput = document.getElementById('description');
+            const categoryInput = document.getElementById('category');
+            const descriptionSuggestions = document.getElementById('descriptionSuggestions');
+            const categorySuggestions = document.getElementById('categorySuggestions');
+            
+            // Populate category datalist
+            const categoryList = document.getElementById('categoryList');
+            commonCategories.forEach(category => {
+                const option = document.createElement('option');
+                option.value = category;
+                categoryList.appendChild(option);
+            });
+            
+            // Description suggestions
+            descriptionInput.addEventListener('input', function() {
+                showSuggestions(this.value, 'description', descriptionSuggestions);
+            });
+            
+            // Category suggestions
+            categoryInput.addEventListener('input', function() {
+                showSuggestions(this.value, 'category', categorySuggestions);
+            });
+            
+            // Hide suggestions when clicking outside
+            document.addEventListener('click', function(e) {
+                if (e.target !== descriptionInput) {
+                    descriptionSuggestions.style.display = 'none';
+                }
+                if (e.target !== categoryInput) {
+                    categorySuggestions.style.display = 'none';
+                }
+            });
+        }
+
+        // Update suggestions from existing expenses
+        function updateSuggestions(expenses) {
+            const descriptionSet = new Set();
+            const categorySet = new Set([...commonCategories]);
+            
+            expenses.forEach(expense => {
+                descriptionSet.add(expense.description);
+                categorySet.add(expense.category);
+            });
+            
+            localStorage.setItem('expenseDescriptions', JSON.stringify([...descriptionSet]));
+            localStorage.setItem('expenseCategories', JSON.stringify([...categorySet]));
+        }
+
+        // Show suggestions based on input
+        function showSuggestions(input, type, container) {
+            if (!input) {
+                container.style.display = 'none';
+                return;
+            }
+            
+            const savedItems = JSON.parse(localStorage.getItem(`expense${type.charAt(0).toUpperCase() + type.slice(1)}s`)) || [];
+            const filtered = savedItems.filter(item => 
+                item.toLowerCase().includes(input.toLowerCase())
+            );
+            
+            if (filtered.length > 0) {
+                container.innerHTML = filtered.map(item => `
+                    <div class="suggestion-item" onclick="selectSuggestion('${type}', '${item.replace("'", "\\'")}')">
+                        ${item}
+                    </div>
+                `).join('');
+                container.style.display = 'block';
+            } else {
+                container.style.display = 'none';
+            }
+        }
+
+        // Select a suggestion
+        function selectSuggestion(type, value) {
+            if (type === 'description') {
+                document.getElementById('description').value = value;
+                document.getElementById('descriptionSuggestions').style.display = 'none';
+            } else {
+                document.getElementById('category').value = value;
+                document.getElementById('categorySuggestions').style.display = 'none';
+            }
+        }
+
+        // Setup event listeners
+        function setupEventListeners() {
+            // Save expense
+            document.getElementById('saveBtn').addEventListener('click', saveExpense);
+            
+            // Cancel edit
+            document.getElementById('cancelBtn').addEventListener('click', cancelEdit);
+            
+            // Clear form
+            document.getElementById('clearBtn').addEventListener('click', clearForm);
+            
+            // Export data
+            document.getElementById('exportBtn').addEventListener('click', exportToJSON);
+            
+            // Import data
+            document.getElementById('importBtn').addEventListener('click', () => document.getElementById('fileInput').click());
+            document.getElementById('fileInput').addEventListener('change', importFromJSON);
+        }
+
+        // Save expense (add or update)
+        async function saveExpense() {
+            const amount = parseFloat(document.getElementById('amount').value);
+            const description = document.getElementById('description').value.trim();
+            const category = document.getElementById('category').value.trim();
+            const date = document.getElementById('date').value;
+            
+            if (!amount || !description || !category || !date) {
+                alert("الرجاء ملء جميع الحقول المطلوبة");
+                return;
+            }
+            
+            const expense = {
+                amount: amount,
+                description: description,
+                category: category,
+                date: date,
+                timestamp: new Date().getTime()
+            };
+            
+            const transaction = db.transaction([storeName], 'readwrite');
+            const store = transaction.objectStore(storeName);
+            
+            try {
+                if (currentEditId) {
+                    // Update existing expense
+                    expense.id = currentEditId;
+                    await updateExpenseInDB(store, expense);
+                } else {
+                    // Add new expense
+                    await addExpenseToDB(store, expense);
+                }
+                
+                // Reset form and update UI
+                clearForm();
+                await loadAndUpdateUI();
+            } catch (error) {
+                console.error("Error saving expense", error);
+                alert("حدث خطأ أثناء حفظ المصروف");
+            }
+        }
+
+        // Add expense to DB
+        function addExpenseToDB(store, expense) {
+            return new Promise((resolve, reject) => {
+                const request = store.add(expense);
+                
+                request.onsuccess = function() {
+                    resolve();
+                };
+                
+                request.onerror = function(event) {
+                    reject(event.target.error);
+                };
+            });
+        }
+
+        // Update expense in DB
+        function updateExpenseInDB(store, expense) {
+            return new Promise((resolve, reject) => {
+                const request = store.put(expense);
+                
+                request.onsuccess = function() {
+                    resolve();
+                };
+                
+                request.onerror = function(event) {
+                    reject(event.target.error);
+                };
+            });
+        }
+
+        // Edit existing expense
+        async function editExpense(id) {
+            const expense = await getExpenseById(id);
+            if (expense) {
+                document.getElementById('amount').value = expense.amount;
+                document.getElementById('description').value = expense.description;
+                document.getElementById('category').value = expense.category;
+                document.getElementById('date').value = expense.date;
+                
+                currentEditId = id;
+                document.getElementById('cancelBtn').classList.remove('hidden');
+                document.getElementById('saveBtn').innerHTML = '<i class="fas fa-save"></i> تحديث';
+                
+                // Scroll to form
+                document.getElementById('formCard').scrollIntoView({ behavior: 'smooth' });
+            }
+        }
+
+        // Get expense by ID
+        function getExpenseById(id) {
+            return new Promise((resolve, reject) => {
+                const transaction = db.transaction([storeName], 'readonly');
+                const store = transaction.objectStore(storeName);
+                const request = store.get(id);
+                
+                request.onsuccess = function() {
+                    resolve(request.result);
+                };
+                
+                request.onerror = function(event) {
+                    reject(event.target.error);
+                };
+            });
+        }
+
+        // Cancel edit mode
+        function cancelEdit() {
+            clearForm();
+        }
+
+        // Clear form
+        function clearForm() {
+            document.getElementById('amount').value = '';
+            document.getElementById('description').value = '';
+            document.getElementById('category').value = '';
+            document.getElementById('date').valueAsDate = new Date();
+            
+            currentEditId = null;
+            document.getElementById('cancelBtn').classList.add('hidden');
+            document.getElementById('saveBtn').innerHTML = '<i class="fas fa-save"></i> حفظ';
+        }
+
+        // Delete expense
+        async function deleteExpense(id) {
+            if (!confirm("هل أنت متأكد من حذف هذا المصروف؟")) return;
+            
+            const transaction = db.transaction([storeName], 'readwrite');
+            const store = transaction.objectStore(storeName);
+            const request = store.delete(id);
+            
+            try {
+                await new Promise((resolve, reject) => {
+                    request.onsuccess = resolve;
+                    request.onerror = () => reject(request.error);
+                });
+                
+                await loadAndUpdateUI();
+            } catch (error) {
+                console.error("Error deleting expense", error);
+                alert("حدث خطأ أثناء حذف المصروف");
+            }
+        }
+
+        // Export to JSON file
+        async function exportToJSON() {
+            try {
+                const expenses = await getAllExpenses();
+                const dataStr = JSON.stringify(expenses, null, 2);
+                
+                // Create localStorage backup
+                localStorage.setItem(backupKey, dataStr);
+                
+                // Also download file
+                const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+                const exportFileDefaultName = `expenses_backup_${new Date().toISOString().slice(0,10)}.json`;
+                
+                const linkElement = document.createElement('a');
+                linkElement.setAttribute('href', dataUri);
+                linkElement.setAttribute('download', exportFileDefaultName);
+                linkElement.click();
+                
+                alert("تم تصدير البيانات بنجاح");
+            } catch (error) {
+                console.error("Error exporting data", error);
+                alert("حدث خطأ أثناء تصدير البيانات");
+            }
+        }
+
+        // Import from JSON file
+        function importFromJSON(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            if (!confirm("هل أنت متأكد من استيراد البيانات؟ سيتم استبدال جميع البيانات الحالية.")) {
+                event.target.value = '';
+                return;
+            }
+            
+            const reader = new FileReader();
+            reader.onload = async function(e) {
+                try {
+                    const expenses = JSON.parse(e.target.result);
+                    
+                    if (!Array.isArray(expenses)) {
+                        throw new Error("الملف لا يحتوي على مصروفات صالحة");
+                    }
+                    
+                    const transaction = db.transaction([storeName], 'readwrite');
+                    const store = transaction.objectStore(storeName);
+                    
+                    // Clear existing data first
+                    await new Promise((resolve, reject) => {
+                        const clearRequest = store.clear();
+                        clearRequest.onsuccess = resolve;
+                        clearRequest.onerror = () => reject(clearRequest.error);
+                    });
+                    
+                    // Add all new expenses
+                    for (const expense of expenses) {
+                        await addExpenseToDB(store, expense);
+                    }
+                    
+                    // Update UI and create backup
+                    await loadAndUpdateUI();
+                    createBackup();
+                    
+                    alert("تم استيراد البيانات بنجاح");
+                    event.target.value = '';
+                } catch (error) {
+                    console.error("Error importing data", error);
+                    alert("حدث خطأ أثناء استيراد البيانات: " + error.message);
+                    event.target.value = '';
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        // Helper functions
+        function formatDate(dateStr) {
+            const date = new Date(dateStr);
+            return date.toLocaleDateString('ar-EG', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
+        }
+
+        function formatMonthYear(monthYear) {
+            const [year, month] = monthYear.split('-');
+            const monthNames = ["يناير", "فبراير", "مارس", "أبريل", "مايو", "يونيو",
+                              "يوليو", "أغسطس", "سبتمبر", "أكتوبر", "نوفمبر", "ديسمبر"];
+            return `${monthNames[parseInt(month) - 1]} ${year}`;
+        }
+    </script>
+</body>
+</html>
