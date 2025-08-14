@@ -2,21 +2,41 @@
 <html lang="ar" dir="rtl" class="scroll-smooth">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>إدارة حلقات التحفيظ – تطبيق الجوال (ملف واحد + PWA + PDF + وضع ليلي)</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <title>إدارة حلقات التحفيظ – تطبيق الجوال</title>
   <script>window.tailwind=window.tailwind||{}; tailwind.config={ darkMode:'class' };</script>
   <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js" integrity="sha512-YcsIPyZz0aQfT2e9QhVwQqT+0f4XeL3lGTc6k2UeJ0OQxg0I0g+JQm0nWq1k8eJwxm1oJcQy2A0k2iXnLrXfLw==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js" integrity="sha512-YcsIPyZ0aQfT2e9QhVwQqT+0f4XeL3lGTc6k2UeJ0OQxg0I0g+JQm0nWq1k8eJwxm1oJcQy2A0k2iXnLrXfLw==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
   <meta name="theme-color" content="#0ea5e9" />
   <style>
-    html, body {height: 100%;}
-    .bottom-nav{position:fixed;bottom:0;left:0;right:0;z-index:40}
-    .input{border:1px solid #e5e7eb;border-radius:0.75rem;padding:0.6rem 0.8rem;width:100%;background:#fff}
-    .card{background:#fff;border-radius:1rem;box-shadow:0 6px 20px rgba(2,6,23,.06)}
+    html, body {height: 100%; -webkit-tap-highlight-color: transparent;}
+    .bottom-nav{position:fixed;bottom:0;left:0;right:0;z-index:40; box-shadow: 0 -2px 10px rgba(0,0,0,0.1);}
+    .input{border:1px solid #e5e7eb;border-radius:0.75rem;padding:0.6rem 0.8rem;width:100%;background:#fff; font-size: 16px;}
+    .card{background:#fff;border-radius:1rem;box-shadow:0 6px 20px rgba(2,6,23,.06); margin-bottom: 1rem;}
     .chip{display:inline-block;background:#f1f5f9;border-radius:999px;padding:.15rem .6rem;font-size:.75rem}
-    .fab{position:fixed;right:1rem;bottom:5rem;z-index:30}
+    .fab{position:fixed;right:1rem;bottom:5rem;z-index:30; display: none;}
     .hidden-when-print{display:block}
-    @media (prefers-color-scheme: dark){ .input{background:#0b1220;color:#e5e7eb;border-color:#1f2937} .card{background:#0b1220} .chip{background:#111827;color:#cbd5e1} }
+    .btn {transition: all 0.2s ease; touch-action: manipulation;}
+    .btn:active {transform: scale(0.96);}
+    .nav-btn {padding: 0.75rem 0.5rem; font-size: 0.75rem;}
+    .input-select {appearance: none; background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e"); background-position: right 0.5rem center; background-repeat: no-repeat; background-size: 1.5em 1.5em;}
+    
+    @media (max-width: 640px) {
+      .fab {display: block;}
+      .bottom-nav {padding-bottom: env(safe-area-inset-bottom);}
+      .header-actions {display: none;}
+      .mobile-menu-btn {display: block;}
+      .input, .btn {padding: 0.75rem 1rem;}
+      .card {border-radius: 0.75rem;}
+    }
+    
+    @media (prefers-color-scheme: dark){ 
+      .input{background:#0b1220;color:#e5e7eb;border-color:#1f2937} 
+      .card{background:#0b1220} 
+      .chip{background:#111827;color:#cbd5e1}
+      .input-select {background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%239ca3af' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");}
+    }
+    
     @media print{.hidden-when-print{display:none} .page{padding:0}}
   </style>
 </head>
@@ -24,11 +44,68 @@
   <header class="sticky top-0 z-40 bg-white/90 dark:bg-slate-900/80 backdrop-blur border-b border-slate-200 dark:border-slate-800">
     <div class="max-w-5xl mx-auto px-4 py-3 flex items-center gap-3">
       <div class="w-9 h-9 rounded-2xl bg-sky-500 text-white grid place-items-center font-bold">ح</div>
-      <div>
-        <h1 class="text-lg font-bold leading-tight">إدارة حلقات القرآن والحديث</h1>
-        <p class="text-xs text-gray-500 dark:text-gray-400">ملف واحد – تخزين محلي – يدعم PWA وPDF والوضع الليلي</p>
+      <div class="grow">
+        <h1 class="text-lg font-bold leading-tight">إدارة حلقات القرآن</h1>
+        <p class="text-xs text-gray-500 dark:text-gray-400">تطبيق متكامل بدون إنترنت</p>
       </div>
-      <div class="ms-auto flex items-center gap-2">
+      
+      <!-- Mobile Menu Button -->
+      <button id="mobileMenuBtn" class="mobile-menu-btn hidden-when-print p-2 rounded-xl bg-gray-100 dark:bg-slate-800 text-sm">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+          <path fill-rule="evenodd" d="M3 5a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM3 10a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM3 15a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clip-rule="evenodd" />
+        </svg>
+      </button>
+      
+      <!-- Mobile Menu (hidden by default) -->
+      <div id="mobileMenu" class="fixed inset-0 z-50 bg-white/95 dark:bg-slate-900/95 backdrop-blur hidden flex-col p-4 pt-16">
+        <button class="mobile-menu-close absolute top-4 left-4 p-2 rounded-full bg-gray-100 dark:bg-slate-800">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+        
+        <div class="grid gap-4 mt-8">
+          <button id="btnThemeMobile" class="px-4 py-3 rounded-xl bg-gray-100 dark:bg-slate-800 text-right flex items-center justify-between">
+            <span>الوضع الليلي</span>
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+              <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z" />
+            </svg>
+          </button>
+          
+          <button id="btnInstallMobile" class="px-4 py-3 rounded-xl bg-indigo-500 text-white text-right hidden">
+            تثبيت التطبيق
+          </button>
+          
+          <button id="btnExportMobile" class="px-4 py-3 rounded-xl bg-emerald-500 text-white text-right">
+            نسخ احتياطي
+          </button>
+          
+          <label class="cursor-pointer px-4 py-3 rounded-xl bg-gray-200 text-right dark:bg-slate-800 flex items-center justify-between">
+            استيراد بيانات
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clip-rule="evenodd" />
+            </svg>
+            <input id="importFileMobile" type="file" accept="application/json" class="hidden" />
+          </label>
+          
+          <button id="btnPrintMobile" class="px-4 py-3 rounded-xl bg-gray-100 dark:bg-slate-800 text-right flex items-center justify-between">
+            طباعة
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M5 4v3H4a2 2 0 00-2 2v3a2 2 0 002 2h1v2a2 2 0 002 2h6a2 2 0 002-2v-2h1a2 2 0 002-2V9a2 2 0 00-2-2h-1V4a2 2 0 00-2-2H7a2 2 0 00-2 2zm8 0H7v3h6V4zm0 8H7v4h6v-4z" clip-rule="evenodd" />
+            </svg>
+          </button>
+          
+          <button id="btnWipeMobile" class="px-4 py-3 rounded-xl bg-rose-500 text-white text-right flex items-center justify-between">
+            حذف كل البيانات
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
+            </svg>
+          </button>
+        </div>
+      </div>
+      
+      <!-- Desktop Actions -->
+      <div class="header-actions ms-auto flex items-center gap-2">
         <button id="btnTheme" class="hidden-when-print px-3 py-2 rounded-xl bg-gray-100 dark:bg-slate-800 text-sm">الوضع الليلي</button>
         <button id="btnInstall" class="hidden-when-print px-3 py-2 rounded-xl bg-indigo-500 text-white text-sm hidden">تثبيت</button>
         <button id="btnExport" class="hidden-when-print px-3 py-2 rounded-xl bg-emerald-500 text-white text-sm">نسخ احتياطي</button>
@@ -74,8 +151,8 @@
           <div><label class="text-sm">الموقع</label><input id="groupLocation" class="input" /></div>
           <div class="sm:col-span-2"><label class="text-sm">ملاحظات</label><textarea id="groupNotes" class="input" rows="2"></textarea></div>
           <div class="sm:col-span-2 flex gap-2">
-            <button class="px-4 py-2 rounded-xl bg-sky-500 text-white" type="submit">حفظ</button>
-            <button id="groupReset" class="px-4 py-2 rounded-xl bg-gray-100 dark:bg-slate-800" type="button">تفريغ</button>
+            <button class="btn px-4 py-2 rounded-xl bg-sky-500 text-white" type="submit">حفظ</button>
+            <button id="groupReset" class="btn px-4 py-2 rounded-xl bg-gray-100 dark:bg-slate-800" type="button">تفريغ</button>
           </div>
         </form>
       </div>
@@ -96,12 +173,12 @@
         <form id="studentForm" class="grid gap-3 sm:grid-cols-2">
           <input type="hidden" id="studentId" />
           <div class="sm:col-span-2"><label class="text-sm">الاسم الكامل</label><input id="studentName" class="input" required /></div>
-          <div><label class="text-sm">المجموعة</label><select id="studentGroup" class="input"></select></div>
+          <div><label class="text-sm">المجموعة</label><select id="studentGroup" class="input input-select"></select></div>
           <div><label class="text-sm">الهاتف (واتساب)</label><input id="studentPhone" class="input" inputmode="tel" /></div>
           <div class="sm:col-span-2"><label class="text-sm">ملاحظات</label><textarea id="studentNotes" class="input" rows="2"></textarea></div>
           <div class="sm:col-span-2 flex gap-2">
-            <button class="px-4 py-2 rounded-xl bg-sky-500 text-white" type="submit">حفظ</button>
-            <button id="studentReset" class="px-4 py-2 rounded-xl bg-gray-100 dark:bg-slate-800" type="button">تفريغ</button>
+            <button class="btn px-4 py-2 rounded-xl bg-sky-500 text-white" type="submit">حفظ</button>
+            <button id="studentReset" class="btn px-4 py-2 rounded-xl bg-gray-100 dark:bg-slate-800" type="button">تفريغ</button>
           </div>
         </form>
       </div>
@@ -114,7 +191,7 @@
           <h2 class="font-semibold">جلسات وحضور</h2>
           <div class="ms-auto grid grid-cols-2 gap-2 w-full sm:w-auto">
             <input id="sessionDate" type="date" class="input" />
-            <select id="sessionGroup" class="input"></select>
+            <select id="sessionGroup" class="input input-select"></select>
           </div>
         </div>
         <div id="attendanceArea" class="space-y-2"></div>
@@ -131,13 +208,13 @@
           </div>
           <div>
             <label class="text-sm">المجموعة</label>
-            <select id="repGroup" class="input"></select>
+            <select id="repGroup" class="input input-select"></select>
           </div>
           <div class="sm:col-span-3 flex items-end gap-2">
-            <button id="btnRunReport" class="px-4 py-2 rounded-xl bg-sky-500 text-white">توليد التقرير</button>
-            <button id="btnShareWA" class="px-4 py-2 rounded-xl bg-emerald-500 text-white">واتساب</button>
-            <button id="btnExportCSV" class="px-4 py-2 rounded-xl bg-gray-100 dark:bg-slate-800">CSV</button>
-            <button id="btnExportPDF" class="px-4 py-2 rounded-xl bg-rose-500 text-white">PDF</button>
+            <button id="btnRunReport" class="btn px-4 py-2 rounded-xl bg-sky-500 text-white">توليد التقرير</button>
+            <button id="btnShareWA" class="btn px-4 py-2 rounded-xl bg-emerald-500 text-white">واتساب</button>
+            <button id="btnExportCSV" class="btn px-4 py-2 rounded-xl bg-gray-100 dark:bg-slate-800">CSV</button>
+            <button id="btnExportPDF" class="btn px-4 py-2 rounded-xl bg-rose-500 text-white">PDF</button>
           </div>
         </div>
       </div>
@@ -165,7 +242,7 @@
           <label class="text-sm">المعايير (0 – 5)</label>
           <div class="text-xs text-gray-500 dark:text-gray-400">الحفظ، الورد، القراءة، الانضباط</div>
         </div>
-        <button id="btnWipe" class="px-4 py-2 rounded-xl bg-rose-500 text-white">حذف كل البيانات (محليًا)</button>
+        <button id="btnWipe" class="btn px-4 py-2 rounded-xl bg-rose-500 text-white">حذف كل البيانات (محليًا)</button>
       </div>
     </section>
   </main>
@@ -173,20 +250,45 @@
   <!-- FAB -->
   <div class="fab hidden-when-print">
     <div class="grid gap-2">
-      <button id="fabAddGroup" class="px-4 py-3 rounded-2xl bg-sky-600 text-white shadow">+ مجموعة</button>
-      <button id="fabAddStudent" class="px-4 py-3 rounded-2xl bg-emerald-600 text-white shadow">+ طالب</button>
-      <button id="fabTakeAttendance" class="px-4 py-3 rounded-2xl bg-indigo-600 text-white shadow">+ حضور اليوم</button>
+      <button id="fabAddGroup" class="btn px-4 py-3 rounded-2xl bg-sky-600 text-white shadow-lg">+ مجموعة</button>
+      <button id="fabAddStudent" class="btn px-4 py-3 rounded-2xl bg-emerald-600 text-white shadow-lg">+ طالب</button>
+      <button id="fabTakeAttendance" class="btn px-4 py-3 rounded-2xl bg-indigo-600 text-white shadow-lg">+ حضور اليوم</button>
     </div>
   </div>
 
   <!-- Bottom Nav -->
   <nav class="bottom-nav bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800">
     <div class="max-w-5xl mx-auto grid grid-cols-5 text-center">
-      <button data-nav="dashboard" class="nav-btn px-2 py-3 text-sm font-medium">الرئيسية</button>
-      <button data-nav="groups" class="nav-btn px-2 py-3 text-sm">المجموعات</button>
-      <button data-nav="students" class="nav-btn px-2 py-3 text-sm">الطلاب</button>
-      <button data-nav="sessions" class="nav-btn px-2 py-3 text-sm">الجلسات</button>
-      <button data-nav="reports" class="nav-btn px-2 py-3 text-sm">التقارير</button>
+      <button data-nav="dashboard" class="nav-btn nav-btn px-2 py-3 text-sm font-medium flex flex-col items-center">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mb-1" viewBox="0 0 20 20" fill="currentColor">
+          <path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z" />
+        </svg>
+        الرئيسية
+      </button>
+      <button data-nav="groups" class="nav-btn px-2 py-3 text-sm flex flex-col items-center">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mb-1" viewBox="0 0 20 20" fill="currentColor">
+          <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v1h8v-1zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 18v-1a5.972 5.972 0 00-.75-2.906A3.005 3.005 0 0119 15v1h-3zM4.75 12.094A5.973 5.973 0 004 15v1H1v-1a3 3 0 013.75-2.906z" />
+        </svg>
+        المجموعات
+      </button>
+      <button data-nav="students" class="nav-btn px-2 py-3 text-sm flex flex-col items-center">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mb-1" viewBox="0 0 20 20" fill="currentColor">
+          <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd" />
+        </svg>
+        الطلاب
+      </button>
+      <button data-nav="sessions" class="nav-btn px-2 py-3 text-sm flex flex-col items-center">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mb-1" viewBox="0 0 20 20" fill="currentColor">
+          <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd" />
+        </svg>
+        الجلسات
+      </button>
+      <button data-nav="reports" class="nav-btn px-2 py-3 text-sm flex flex-col items-center">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mb-1" viewBox="0 0 20 20" fill="currentColor">
+          <path fill-rule="evenodd" d="M6 2a2 2 0 00-2 2v12a2 2 0 002 2h8a2 2 0 002-2V7.414A2 2 0 0015.414 6L12 2.586A2 2 0 0010.586 2H6zm2 10a1 1 0 10-2 0v3a1 1 0 102 0v-3zm2-3a1 1 0 011 1v5a1 1 0 11-2 0v-5a1 1 0 011-1zm4-1a1 1 0 10-2 0v7a1 1 0 102 0V8z" clip-rule="evenodd" />
+        </svg>
+        التقارير
+      </button>
     </div>
   </nav>
 
@@ -204,7 +306,7 @@
 
     // ===== Theme (Light/Dark) =====
     const THEME_KEY='halaqah_theme';
-    function applyTheme(t){ document.documentElement.classList.toggle('dark', t==='dark'); localStorage.setItem(THEME_KEY,t); const meta=$('meta[name="theme-color"]'); if(meta) meta.setAttribute('content', t==='dark'? '#0b1220':'#0ea5e9'); $('#btnTheme').textContent = t==='dark'?'الوضع الفاتح':'الوضع الليلي'; }
+    function applyTheme(t){ document.documentElement.classList.toggle('dark', t==='dark'); localStorage.setItem(THEME_KEY,t); const meta=$('meta[name="theme-color"]'); if(meta) meta.setAttribute('content', t==='dark'? '#0b1220':'#0ea5e9'); $('#btnTheme').textContent = t==='dark'?'الوضع الفاتح':'الوضع الليلي'; $('#btnThemeMobile').textContent = t==='dark'?'الوضع الفاتح':'الوضع الليلي'; }
     function initTheme(){ const saved = localStorage.getItem(THEME_KEY); const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches; applyTheme(saved|| (prefersDark?'dark':'light')); }
 
     // ===== IndexedDB =====
@@ -221,6 +323,13 @@
     const navBtns = $$('.nav-btn');
     function go(page){ pages.forEach(p=> p.classList.toggle('hidden', p.dataset.page!==page)); navBtns.forEach(b=> b.classList.toggle('font-medium', b.dataset.nav===page)); localStorage.setItem('page', page); renderAll(); }
     $$('.nav-btn').forEach(b=> b.onclick = ()=> go(b.dataset.nav));
+
+    // ===== Mobile Menu =====
+    $('#mobileMenuBtn').onclick = ()=> $('#mobileMenu').classList.remove('hidden');
+    $('.mobile-menu-close').onclick = ()=> $('#mobileMenu').classList.add('hidden');
+    
+    // Close menu when clicking outside
+    $('#mobileMenu').onclick = (e)=> { if(e.target === $('#mobileMenu')) $('#mobileMenu').classList.add('hidden'); };
 
     // ===== Load =====
     async function load(){
@@ -252,8 +361,8 @@
         const row = document.createElement('div'); row.className='p-3 border border-slate-200 dark:border-slate-800 rounded-xl flex items-center gap-2';
         const name = document.createElement('div'); name.className='font-semibold grow'; name.textContent = g.name;
         const loc = document.createElement('div'); loc.className='chip'; loc.textContent = g.location||'—';
-        const btnEdit = document.createElement('button'); btnEdit.className='px-3 py-1 rounded-xl bg-gray-100 dark:bg-slate-800 text-sm'; btnEdit.textContent='تعديل';
-        const btnDel = document.createElement('button'); btnDel.className='px-3 py-1 rounded-xl bg-rose-100 text-rose-700 text-sm'; btnDel.textContent='حذف';
+        const btnEdit = document.createElement('button'); btnEdit.className='btn px-3 py-1 rounded-xl bg-gray-100 dark:bg-slate-800 text-sm'; btnEdit.textContent='تعديل';
+        const btnDel = document.createElement('button'); btnDel.className='btn px-3 py-1 rounded-xl bg-rose-100 text-rose-700 text-sm'; btnDel.textContent='حذف';
         btnEdit.onclick = ()=> fillGroupForm(g);
         btnDel.onclick = async ()=>{ if(confirm('حذف المجموعة؟')){ await idbDel('groups', g.id); await cascadeAfterGroupDelete(g.id); await load(); } };
         row.append(name, loc, btnEdit, btnDel); container.appendChild(row);
@@ -275,9 +384,9 @@
         const avatar = document.createElement('div'); avatar.className='w-9 h-9 rounded-full bg-sky-100 grid place-items-center font-bold text-sky-700'; avatar.textContent=s.ini;
         const nameBox = document.createElement('div'); const nm=document.createElement('div'); nm.className='font-semibold'; nm.textContent=s.name; const gn=document.createElement('div'); gn.className='text-xs text-gray-500 dark:text-gray-400'; gn.textContent=s.groupName; nameBox.append(nm,gn);
         const actions = document.createElement('div'); actions.className='flex gap-2';
-        const aWA = document.createElement('a'); aWA.className='px-3 py-1 rounded-xl bg-emerald-50 text-emerald-700 text-sm'; aWA.target='_blank'; aWA.href=s.wa; aWA.textContent='واتساب';
-        const btnE=document.createElement('button'); btnE.className='px-3 py-1 rounded-xl bg-gray-100 dark:bg-slate-800 text-sm'; btnE.textContent='تعديل';
-        const btnD=document.createElement('button'); btnD.className='px-3 py-1 rounded-xl bg-rose-100 text-rose-700 text-sm'; btnD.textContent='حذف';
+        const aWA = document.createElement('a'); aWA.className='btn px-3 py-1 rounded-xl bg-emerald-50 text-emerald-700 text-sm'; aWA.target='_blank'; aWA.href=s.wa; aWA.textContent='واتساب';
+        const btnE=document.createElement('button'); btnE.className='btn px-3 py-1 rounded-xl bg-gray-100 dark:bg-slate-800 text-sm'; btnE.textContent='تعديل';
+        const btnD=document.createElement('button'); btnD.className='btn px-3 py-1 rounded-xl bg-rose-100 text-rose-700 text-sm'; btnD.textContent='حذف';
         btnE.onclick = ()=> fillStudentForm(s);
         btnD.onclick = async ()=>{ if(confirm('حذف الطالب؟')){ await idbDel('students', s.id); await cascadeAfterStudentDelete(s.id); await load(); } };
         actions.append(aWA, btnE, btnD);
@@ -376,20 +485,27 @@
 
     // ===== Header actions =====
     $('#btnPrint').onclick = ()=> window.print();
+    $('#btnPrintMobile').onclick = ()=> { $('#mobileMenu').classList.add('hidden'); window.print(); };
+    
     $('#btnExport').onclick = async ()=>{ const dump = { groups: state.groups, students: state.students, sessions: state.sessions, attendance: state.attendance, teacherName: state.teacherName }; const blob = new Blob([JSON.stringify(dump,null,2)], {type: 'application/json'}); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'halaqah_backup.json'; a.click(); URL.revokeObjectURL(a.href); };
+    $('#btnExportMobile').onclick = $('#btnExport').onclick;
+    
     $('#importFile').onchange = async (e)=>{ const f = e.target.files?.[0]; if(!f) return; const txt = await f.text(); try{ const data = JSON.parse(txt); await idbClearAll(); for(const g of (data.groups||[])) await idbPut('groups', g); for(const s of (data.students||[])) await idbPut('students', s); for(const x of (data.sessions||[])) await idbPut('sessions', x); for(const a of (data.attendance||[])) await idbPut('attendance', a); if(data.teacherName) localStorage.setItem('teacherName', data.teacherName); toast('تم الاستيراد بنجاح'); await load(); }catch(err){ alert('ملف غير صالح'); } e.target.value=''; };
+    $('#importFileMobile').onchange = $('#importFile').onchange;
 
     // ===== Settings =====
     $('#teacherName').onchange = (e)=>{ state.teacherName = e.target.value.trim(); localStorage.setItem('teacherName', state.teacherName); };
     $('#btnWipe').onclick = async ()=>{ if(confirm('هل أنت متأكد من حذف جميع البيانات المحلية؟')){ await idbClearAll(); localStorage.clear(); toast('تم الحذف'); await load(); } };
+    $('#btnWipeMobile').onclick = ()=> { $('#mobileMenu').classList.add('hidden'); $('#btnWipe').click(); };
 
     // ===== FAB =====
     $('#fabAddGroup').onclick = ()=> { go('groups'); $('#groupForm').scrollIntoView({behavior:'smooth'}); };
     $('#fabAddStudent').onclick = ()=> { go('students'); $('#studentForm').scrollIntoView({behavior:'smooth'}); };
     $('#fabTakeAttendance').onclick = ()=> { go('sessions'); $('#attendanceArea').scrollIntoView({behavior:'smooth'}); };
 
-    // ===== Theme toggle
+    // ===== Theme toggle =====
     $('#btnTheme').onclick = ()=>{ const cur = localStorage.getItem(THEME_KEY)||'light'; applyTheme(cur==='dark'?'light':'dark'); };
+    $('#btnThemeMobile').onclick = $('#btnTheme').onclick;
 
     // ===== Render All =====
     function renderAll(){ renderStats(); renderGroups(); renderStudents(); renderAttendance(); }
@@ -406,9 +522,10 @@
       try{ await navigator.serviceWorker.register(swUrl); }catch(err){ console.warn('SW register failed', err); }
     }
 
-    let deferredPrompt=null; window.addEventListener('beforeinstallprompt', (e)=>{ e.preventDefault(); deferredPrompt=e; $('#btnInstall').classList.remove('hidden'); });
-    $('#btnInstall').onclick = async ()=>{ if(!deferredPrompt) return; deferredPrompt.prompt(); const {outcome} = await deferredPrompt.userChoice; if(outcome==='accepted') toast('تم التثبيت'); deferredPrompt=null; $('#btnInstall').classList.add('hidden'); };
-    window.addEventListener('appinstalled', ()=>{ toast('تم التثبيت كتطبيق'); $('#btnInstall').classList.add('hidden'); });
+    let deferredPrompt=null; window.addEventListener('beforeinstallprompt', (e)=>{ e.preventDefault(); deferredPrompt=e; $('#btnInstall').classList.remove('hidden'); $('#btnInstallMobile').classList.remove('hidden'); });
+    $('#btnInstall').onclick = async ()=>{ if(!deferredPrompt) return; deferredPrompt.prompt(); const {outcome} = await deferredPrompt.userChoice; if(outcome==='accepted') toast('تم التثبيت'); deferredPrompt=null; $('#btnInstall').classList.add('hidden'); $('#btnInstallMobile').classList.add('hidden'); };
+    $('#btnInstallMobile').onclick = ()=> { $('#mobileMenu').classList.add('hidden'); $('#btnInstall').click(); };
+    window.addEventListener('appinstalled', ()=>{ toast('تم التثبيت كتطبيق'); $('#btnInstall').classList.add('hidden'); $('#btnInstallMobile').classList.add('hidden'); });
 
     // ===== Go! =====
     window.addEventListener('load', async ()=>{ initTheme(); registerManifest(); await registerSW(); await load(); });
